@@ -158,11 +158,18 @@ nav a.on svg{animation:bounce .45s}
 <div id="msg" role="status"></div>
 
 <script>
-/* ====== CONFIG : à remplacer par tes valeurs Supabase (Project Settings > API) ====== */
+/* Seul fichier à modifier pour tes identifiants. */
+/* Supabase : Project Settings > API. Utilise la clé PUBLIQUE ("anon" ou "publishable"), jamais la clé secrète. */
 const SUPABASE_URL = "https://jgpssxffixuinwsyllfa.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncHNzeGZmaXh1aW53c3lsbGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2NDQ5NTgsImV4cCI6MjEwNzIyMDk1OH0.ZXYbOu-IrTcMXQtbYmlOi-nt9wJ_3YZocW9Ln5s9CIc";
-/* ====== Infos légales : à compléter ====== */
-const EDITEUR = {nom:"[NOM PRÉNOM]", adresse:"[ADRESSE POSTALE]", email:"[EMAIL DE CONTACT]"};
+
+/* Informations légales de l'éditeur */
+const EDITEUR = {
+  nom: "MONTIGNAC MAXENCE",
+  adresse: "Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis",
+  email: "lateliervolt@gmail.com"
+};
+
 
 const DEMO = SUPABASE_URL.includes("VOTRE");
 function mockSb(){
@@ -623,18 +630,18 @@ function vAccount(){
 /* ====== Pages légales ====== */
 const N = "L'Atelier Volt";
 const L = t => `<div class="card legal"><p><a href="#" onclick="history.back();return false">← Retour</a></p>${t}</div>`;
-const E = () => `${esc(EDITEUR.nom)}, ${esc(EDITEUR.adresse)}, ${esc(EDITEUR.email)}`;
-const vMentions = () => $("#app").innerHTML = L(`<h1>Mentions légales</h1><p class="mute">Dernière mise à jour : [DATE]</p>
-<h3>1. Éditeur du site</h3><p>${N} est édité par ${E()}. Directeur de la publication : ${esc(EDITEUR.nom)}. Le site est un projet non commercial et gratuit.</p>
-<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : [RÉGION, ex. Union européenne].</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL).</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
-<h3>3. Contact</h3><p>Par email : ${esc(EDITEUR.email)}. Par courrier : ${esc(EDITEUR.adresse)}. Nous répondons en français, en principe sous 7 jours ouvrés.</p>
+const E = () => `${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}`;
+const vMentions = () => $("#app").innerHTML = L(`<h1>Mentions légales</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
+<h3>1. Éditeur du site</h3><p>${N} est édité à titre non professionnel par ${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}. Conformément à l'article 6, III, 2° de la loi n° 2004-575 du 21 juin 2004 (LCEN), l'éditeur a communiqué son identité complète à l'hébergeur ; l'adresse postale indiquée est celle de l'hébergeur : ${esc(EDITEUR.adresse)}. Directeur de la publication : ${esc(EDITEUR.nom)}. Le site est un projet gratuit et non commercial.</p>
+<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : West EU (Irlande), dans l'Union européenne.</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL).</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
+<h3>3. Contact</h3><p>Par email : ${esc(EDITEUR.email)}. Nous répondons en français, en principe sous 7 jours ouvrés.</p>
 <h3>4. Signalement de contenus illicites</h3><p>Tu peux signaler un contenu que tu estimes illicite en écrivant à l'adresse ci-dessus, en indiquant : la page concernée, une description du contenu, les raisons pour lesquelles il est illicite, ton nom et ton adresse email. Ce point de contact unique est aussi destiné aux autorités des États membres (règlement (UE) 2022/2065, dit « DSA »). Les contenus saisis par les utilisateurs sont privés et visibles uniquement de leur auteur, sauf le pseudo et les totaux de ceux qui ont choisi d'apparaître aux classements.</p>
 <h3>5. Propriété intellectuelle</h3><p>Le code, la structure, les textes, le logo et la charte graphique de ${N} sont protégés par le droit d'auteur. Toute reproduction ou réutilisation sans autorisation écrite est interdite. Les noms de marques et de modèles cités appartiennent à leurs titulaires, ne sont employés que pour identifier les produits, et n'impliquent aucun partenariat ni affiliation.</p>
 <h3>6. Responsabilité</h3><p>L'éditeur s'efforce de fournir des informations exactes, sans garantir qu'elles soient complètes ou à jour. Voir les <a href="#/cgu">CGU</a>.</p>
 <h3>7. Données personnelles et cookies</h3><p>Voir la <a href="#/confidentialite">politique de confidentialité</a> et la <a href="#/cookies">politique relative aux cookies</a>.</p>
 <h3>8. Accessibilité</h3><p>Le site est conçu pour être utilisable au clavier et sur mobile, avec des contrastes suffisants. Pour signaler un obstacle d'accessibilité, écris à l'adresse de contact.</p>
 <h3>9. Droit applicable</h3><p>Droit français. En cas de litige, voir l'article 16 des <a href="#/cgu">CGU</a>.</p>`);
-const vCgu = () => $("#app").innerHTML = L(`<h1>Conditions générales d'utilisation</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+const vCgu = () => $("#app").innerHTML = L(`<h1>Conditions générales d'utilisation</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
 <h3>1. Objet</h3><p>${N}, édité par ${E()} (« l'Éditeur »), est un service en ligne gratuit de suivi d'entretien de trottinettes électriques : carnet d'interventions, rappels, suivi de l'assurance et guides pratiques. Les présentes conditions générales (« CGU ») régissent son utilisation.</p>
 <h3>2. Acceptation</h3><p>La création d'un compte suppose d'avoir lu les CGU et de cocher la case d'acceptation. La date d'acceptation est enregistrée. Si tu n'es pas d'accord, n'utilise pas le service.</p>
 <h3>3. Modification des CGU</h3><p>L'Éditeur peut modifier les CGU, notamment pour tenir compte de l'évolution du service ou de la loi. Les utilisateurs inscrits sont informés par email au moins 15 jours avant l'entrée en vigueur. Sans acceptation, tu peux supprimer ton compte avant cette date.</p>
@@ -653,8 +660,8 @@ const vCgu = () => $("#app").innerHTML = L(`<h1>Conditions générales d'utilisa
 <h3>13. Propriété intellectuelle et marques</h3><p>Voir les <a href="#/mentions">mentions légales</a>. Les marques citées appartiennent à leurs propriétaires et le service n'est affilié à aucune d'elles.</p>
 <h3>14. Données personnelles</h3><p>Le traitement de tes données est décrit dans la <a href="#/confidentialite">politique de confidentialité</a> et la <a href="#/cookies">politique relative aux cookies</a>.</p>
 <h3>15. Divers</h3><p>Si une clause des CGU est déclarée nulle, les autres restent applicables. Le fait de ne pas exercer un droit n'emporte pas renonciation. Les CGU sont rédigées en français ; seule cette version fait foi. Les données enregistrées par le service font foi, sauf preuve contraire, des opérations réalisées.</p>
-<h3>16. Médiation, droit applicable et juridiction</h3><p>Pour toute réclamation, écris d'abord à l'Éditeur (voir les mentions légales). Si tu es consommateur et que le litige persiste, tu peux recourir gratuitement au médiateur de la consommation : [NOM ET COORDONNÉES DU MÉDIATEUR]. Plateforme européenne de règlement en ligne des litiges : ec.europa.eu/consumers/odr. Les CGU sont soumises au droit français. Si tu es consommateur résidant dans l'Union européenne, tu conserves la protection des dispositions impératives de ton pays de résidence et peux saisir les tribunaux de ton domicile. À défaut, les tribunaux français sont compétents.</p>`);
-const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+<h3>16. Réclamations, droit applicable et juridiction</h3><p>Pour toute réclamation, écris d'abord à l'Éditeur (voir les mentions légales). Le service étant proposé gratuitement par un particulier, sans activité commerciale, aucun médiateur de la consommation n'est désigné à ce jour ; s'il en était désigné un, ses coordonnées seraient indiquées ici. Tu peux à tout moment saisir les tribunaux compétents et, pour un litige transfrontalier au sein de l'Union européenne, le Centre européen des consommateurs France. Les CGU sont soumises au droit français. Si tu es consommateur résidant dans l'Union européenne, tu conserves la protection des dispositions impératives de ton pays de résidence et peux saisir les tribunaux de ton domicile. À défaut, les tribunaux français sont compétents.</p>`);
+const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
 <p>Cette politique explique comment tes données personnelles sont traitées, conformément au règlement (UE) 2016/679 (RGPD) et à la loi française Informatique et Libertés.</p>
 <h3>1. Responsable du traitement</h3><p>${E()}. Aucun délégué à la protection des données n'est désigné. Toute demande se fait à l'adresse email ci-dessus.</p>
 <h3>2. Données traitées, finalités, bases légales, durées</h3><ul>
@@ -678,7 +685,7 @@ const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</
 <h3>7. Mineurs</h3><p>Le service est réservé aux personnes de 15 ans ou plus. Un compte créé par une personne plus jeune sera supprimé dès que l'Éditeur en a connaissance. Les parents peuvent le signaler à l'adresse de contact.</p>
 <h3>8. Cookies et traceurs</h3><p>Voir la <a href="#/cookies">politique relative aux cookies</a>.</p>
 <h3>9. Modifications</h3><p>Cette politique peut évoluer. Toute modification importante est signalée aux utilisateurs inscrits. La date de dernière mise à jour figure en haut de la page.</p>`);
-const vCookies = () => $("#app").innerHTML = L(`<h1>Cookies et stockage local</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+const vCookies = () => $("#app").innerHTML = L(`<h1>Cookies et stockage local</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
 <h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
 <h3>Ce que le site n'utilise pas</h3><p>Aucun cookie publicitaire, aucun outil de mesure d'audience, aucun bouton ou contenu de réseau social, aucune police ni vidéo chargée depuis un service tiers de suivi.</p>
 <h3>Consentement</h3><p>Ces éléments sont strictement nécessaires au service que tu demandes : ils sont exemptés de consentement (article 82 de la loi Informatique et Libertés). Si un traceur non essentiel était ajouté un jour, ton consentement te serait demandé <i>avant</i> tout dépôt, et tu pourrais le refuser aussi simplement que l'accepter.</p>
