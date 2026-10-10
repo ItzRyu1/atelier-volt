@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="L'Atelier Volt : le carnet d'entretien gratuit de ta trottinette électrique. Interventions, rappels, suivi GPS, itinéraires et classements.">
+<meta name="theme-color" content="#3a3dff">
+<meta property="og:title" content="L'Atelier Volt">
+<meta property="og:description" content="Le carnet d'entretien de ta trottinette électrique : interventions, rappels, suivi GPS, itinéraires.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%233a3dff'/%3E%3Cpath d='M26 8 14 26h8l-2 14 14-20h-8z' fill='%23ffd400'/%3E%3C/svg%3E">
+<title>L'Atelier Volt – le carnet d'entretien de ta trottinette électrique</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<style>
+@font-face{font-family:"Space Grotesk";src:local("Space Grotesk"),url(fonts/SpaceGrotesk.woff2) format("woff2");font-weight:300 700;font-display:swap}
+:root{--bg:#f1f3fb;--card:#fff;--ink:#12132b;--mute:#5d6086;--line:#e0e3f2;--acc:#3a3dff;--acc2:#2a2ce0;--acc-ink:#fff;--soft:#e9ebff;--warn:#d9480f;--ok:#0f8a64;--tag-ink:#fff;--r:20px}
+@media(prefers-color-scheme:dark){:root{--bg:#0c0d22;--card:#16183a;--ink:#eceeff;--mute:#9a9fcf;--line:#262a55;--acc:#8b93ff;--acc2:#a3aaff;--acc-ink:#0c0d22;--soft:#22255a;--warn:#ff8a5c;--ok:#3ddba8;--tag-ink:#0c0d22}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Space Grotesk","Avenir Next","Segoe UI",system-ui,sans-serif}
+h1,h2,h3{margin:0 0 .5rem;line-height:1.1;letter-spacing:-.03em;font-weight:800}
+h1{font-size:clamp(1.8rem,6vw,2.3rem)}h2{font-size:1.3rem}h3{font-size:1.08rem}
+a{color:var(--acc)}
+header{display:flex;justify-content:space-between;align-items:center;padding:calc(.7rem + env(safe-area-inset-top,0px)) 1.1rem .7rem}
+.brand{display:flex;align-items:center;gap:.55rem;font-weight:800;font-size:1.15rem;letter-spacing:-.03em}
+main{max-width:780px;margin:0 auto;padding:.6rem 1rem 8rem}
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(.8rem + env(safe-area-inset-bottom,0px));width:min(94%,520px);z-index:5;display:flex;gap:.15rem;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:.3rem;box-shadow:0 12px 32px rgba(18,19,43,.16)}
+nav:empty{display:none}
+nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.66rem;font-weight:700;color:var(--mute);text-decoration:none;padding:.4rem 0;border-radius:999px}
+nav a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav a.on{background:var(--acc);color:var(--acc-ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.15rem;margin:0 0 .9rem}
+.panel{background:#3a3dff radial-gradient(rgba(255,255,255,.13) 1.3px,transparent 1.4px) 0 0/22px 22px;color:#fff;border-radius:26px;padding:1.4rem 1.3rem;margin:0 0 .9rem}
+.panel span{opacity:.85;font-weight:600}.panel h1{color:#fff;margin:.2rem 0 1rem}
+.panel .big{font-size:3.4rem;font-weight:800;letter-spacing:-.05em;line-height:1}.panel small{font-size:1rem;font-weight:500;opacity:.8;letter-spacing:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:.9rem}
+.stat{margin:0;font-size:.9rem;color:var(--mute)}.stat b{display:block;font-size:1.8rem;color:var(--ink);letter-spacing:-.04em;line-height:1.1}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:.8rem;font-size:.8rem;color:var(--mute)}.tile b{display:block;font-size:1.4rem;color:var(--ink);letter-spacing:-.03em}
+label{display:block;font-weight:600;font-size:.92rem;margin:.9rem 0 .3rem}
+input,select,textarea{width:100%;padding:.7rem .85rem;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button,.btn{display:inline-block;padding:.55rem 1.1rem;border:0;border-radius:999px;background:var(--acc);color:var(--acc-ink);font:600 .95rem inherit;cursor:pointer;margin:.7rem .4rem 0 0;text-decoration:none;text-align:center}
+button:hover,.btn:hover{background:var(--acc2)}
+button.sec,.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.sec:hover,.btn.sec:hover{background:var(--soft)}
+button.danger{background:var(--warn);color:#fff}
+.btn.light{background:#fff;color:#3a3dff}.btn.light:hover{background:#eceeff}
+.btn.line{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45)}.btn.line:hover{background:rgba(255,255,255,.12)}
+.row{display:flex;gap:.7rem;flex-wrap:wrap}.row>*{flex:1 1 150px}
+.btnrow{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}.btnrow>*{flex:1 1 120px;margin:0}
+.mute{color:var(--mute);font-size:.92rem}
+.tag{display:inline-block;padding:.1rem .6rem;border-radius:99px;font-size:.78rem;font-weight:700;color:var(--tag-ink);margin:0 .3rem .3rem 0}
+.late{background:var(--warn)}.soon{background:#c98a00}.fine{background:var(--ok)}.tag.neutral{background:var(--mute)}
+.bar{height:6px;border-radius:99px;background:var(--line);margin-top:.6rem;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px}
+.chk{display:flex;gap:.7rem;align-items:flex-start;font-weight:400;margin:.8rem 0}.chk input{flex:none;width:1.25rem;height:1.25rem;padding:0;margin:.15rem 0 0;accent-color:var(--acc)}.chk span{flex:1;min-width:0}
+.scoot{display:flex;gap:.9rem;align-items:center;margin-bottom:.6rem}.scoot svg{width:66px;flex:none;color:var(--acc);background:var(--soft);border-radius:16px;padding:.55rem .6rem}
+details{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.7rem}
+summary{font-weight:700;cursor:pointer}details ol{margin:.6rem 0 0;padding-left:1.2rem}
+.warnbox{border-left:4px solid var(--acc);background:var(--card);padding:.7rem 1rem;border-radius:14px;margin-bottom:1rem;font-size:.95rem}
+.demo{background:#fff4e0;color:#5c3b00;border:1px solid #f0c36d;border-radius:14px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.92rem}
+.acw{position:relative}.ac{position:absolute;left:0;right:0;top:100%;z-index:6;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.2);overflow:hidden}.ac:empty{display:none}
+.ac button{display:block;width:100%;text-align:left;margin:0;border-radius:0;background:transparent;color:var(--ink);font-weight:500}.ac button:hover{background:var(--soft)}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:.55rem;background:#fff;color:#3c4043;border:1px solid #dadce0}.gbtn:hover{background:#f1f3f4}
+.kbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:.5rem;margin:.6rem 0 0}
+.authc{max-width:440px;margin:1rem auto 0}.authc>.card{padding:1.4rem}.authc .mark{margin-bottom:.8rem}
+footer{text-align:center;padding:1rem 1rem 7rem;font-size:.85rem;color:var(--mute)}footer a{color:var(--mute);margin:0 .5rem;white-space:nowrap}
+.legal h3{margin-top:1.3rem}.legal p,.legal li{font-size:.96rem}
+#msg{position:fixed;top:calc(.8rem + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:.7rem 1rem;border-radius:14px;display:none;max-width:90%;z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+#cookie{display:none;max-width:760px;width:calc(100% - 2rem);margin:.4rem auto 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:.8rem 1rem;font-size:.9rem}
+/* Accueil visiteurs */
+body.land header{background:#3a3dff;color:#fff}body.land header .btn{background:#fff;color:#3a3dff;margin:0}
+body.land main{max-width:none;padding:0 0 2rem}
+.lp-hero{background:#3a3dff radial-gradient(rgba(255,255,255,.13) 1.3px,transparent 1.4px) 0 0/24px 24px;overflow:hidden;color:#fff;border-radius:0 0 40px 40px;padding:1rem 1.2rem 3.4rem}
+.lp-in{max-width:1000px;margin:0 auto;display:grid;gap:1.8rem;align-items:center}
+@media(min-width:820px){.lp-in{grid-template-columns:1fr 1.25fr}}
+.lp-hero h1{font-size:clamp(2.5rem,9vw,4.4rem);line-height:1;letter-spacing:-.05em;margin:.6rem 0 1rem}
+.lp-hero p{color:#d6d9ff;font-size:1.1rem;max-width:34ch;margin:0 0 1.4rem}
+.lp-cta{display:flex;gap:.6rem;flex-wrap:wrap}.lp-cta .btn{margin:0;padding:.65rem 1.3rem}
+.lp-art{position:relative;padding-bottom:2.6rem}.lp-art>svg{width:100%;display:block}
+.lp-card{position:absolute;right:0;bottom:0;width:min(260px,72%);background:#fff;color:#12132b;border-radius:18px;padding:.85rem 1rem;transform:rotate(-2.5deg);box-shadow:0 14px 34px rgba(8,9,60,.35)}
+.lp-card small{display:block;color:#5d6086;margin-top:.4rem}
+.lp-sec{max-width:1000px;margin:0 auto;padding:3.2rem 1.2rem 0}
+.lp-sec h2{font-size:clamp(1.7rem,5vw,2.5rem);letter-spacing:-.04em;max-width:18ch;line-height:1.05}
+.lp-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));column-gap:2.5rem;margin-top:1.4rem}
+.lp-list>div{display:flex;gap:1rem;padding:1.3rem 0;border-top:1px solid var(--line)}
+.lp-list p{margin:.2rem 0 0;color:var(--mute)}
+.ico{flex:none;width:46px;height:46px;border-radius:14px;background:var(--soft);display:grid;place-items:center}
+.ico svg{width:24px;height:24px;fill:none;stroke:var(--acc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.steps{list-style:none;margin:1.5rem 0 0;padding:0;display:grid;gap:1.4rem;counter-reset:s}
+@media(min-width:820px){.steps{grid-template-columns:repeat(3,1fr);gap:2rem}}
+.steps li::before{counter-increment:s;content:counter(s);display:block;font-size:3rem;font-weight:800;line-height:1;color:var(--acc);letter-spacing:-.05em;margin-bottom:.4rem}
+.steps p{margin:.2rem 0 0;color:var(--mute)}
+.lp-band{max-width:1000px;margin:3.4rem auto 0;background:#1b1d55;color:#fff;border-radius:30px;padding:2.2rem 1.5rem}
+.lp-band h2{color:#fff;max-width:20ch}.lp-band p{color:#c4c8f5;margin:.2rem 0 1.2rem}.lp-band .btn{margin:0;padding:.65rem 1.3rem}
+html,body{max-width:100%;overflow-x:hidden}
+button,.btn{transition:background .15s,transform .1s}button:active,.btn:active{transform:scale(.97)}
+nav a{transition:background .2s,color .2s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:translateY(18px) scale(.96)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) rotate(-6deg)}}
+@keyframes drive{from{opacity:0;transform:translateX(-70px)}}
+@keyframes dash{to{stroke-dashoffset:26}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fill{from{transform:scaleX(0)}}
+@keyframes grow{from{transform:scaleX(0)}}
+#app>*{animation:rise .35s both}
+.bar i{transform-origin:left;animation:grow .9s .15s cubic-bezier(.2,.8,.2,1) both}
+.lp-in>*{min-width:0}
+.lp-hero h1{animation:rise .7s both}.lp-hero p{animation:rise .7s .1s both}.lp-cta{animation:rise .7s .2s both}
+.lp-card{animation:cardIn .8s .6s both}
+.road{animation:dash 1.1s linear infinite}
+.ride{animation:drive 1s cubic-bezier(.2,.8,.2,1) both}
+.spin{animation:spin 2.4s linear infinite}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(12,13,34,.55);backdrop-filter:blur(4px);display:grid;place-items:center;padding:1rem;animation:fade .25s}
+.sheet{background:var(--card);border-radius:26px;padding:1.6rem;max-width:420px;width:100%;animation:pop .4s cubic-bezier(.2,.9,.3,1.1)}
+.sheet p{margin:.4rem 0}.ico.big{width:60px;height:60px;border-radius:20px;margin-bottom:1rem}.ico.big svg{width:30px;height:30px}
+#splash{position:fixed;inset:0;z-index:50;background:#3a3dff radial-gradient(rgba(255,255,255,.13) 1.3px,transparent 1.4px) 0 0/24px 24px;color:#fff;display:grid;place-items:center;text-align:center;cursor:pointer;transition:opacity .5s}
+#splash.out{opacity:0;pointer-events:none}
+.sp-in{display:grid;gap:1.1rem;justify-items:center;padding:2rem}
+.sp-ring{width:96px;height:96px}.sp-ring svg{width:100%;height:100%}
+.sp-ring .arc{transform-box:fill-box;transform-origin:center;animation:spin 1.1s linear infinite}
+.sp-hello{font-size:clamp(2.2rem,9vw,3.4rem);font-weight:800;letter-spacing:-.045em;line-height:1.02;animation:rise .7s .15s both}
+.sp-bar{width:min(240px,60vw);height:5px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.sp-bar i{display:block;height:100%;background:#2de0b0;transform-origin:left;animation:fill 5s linear both}
+.sp-msg{color:#d6d9ff;min-height:1.5em}.sp-skip{font-size:.8rem;color:#a9afff}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@keyframes marq{to{transform:translateX(-50%)}}
+@keyframes float{50%{transform:translateY(-9px)}}
+@keyframes beam{50%{opacity:.07}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,72,15,.5)}60%{box-shadow:0 0 0 7px rgba(217,72,15,0)}}
+@keyframes bounce{40%{transform:translateY(-4px) scale(1.15)}}
+@keyframes drop{from{opacity:0;transform:translate(-50%,-12px)}}
+.lp-art{margin:0 -1.2rem}
+@media(min-width:820px){.lp-art{margin:0}}
+.lp-chip{position:absolute;left:6%;top:4%;background:#fff;color:#12132b;border-radius:999px;padding:.4rem .95rem;font-weight:700;font-size:.9rem;box-shadow:0 10px 26px rgba(8,9,60,.3);animation:float 4s ease-in-out infinite}
+.beam{animation:beam 3s ease-in-out infinite}
+.mq-wrap{padding-top:2.2rem}.mq-wrap>p{text-align:center;margin:0 1rem}
+.mq{overflow:hidden;padding-top:1.3rem;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.mq-t{display:flex;width:max-content;align-items:center;animation:marq 42s linear infinite}
+.mq.rev .mq-t{animation-direction:reverse;animation-duration:70s}
+.mq:hover .mq-t{animation-play-state:paused}
+.mq-b{display:flex;align-items:center;font-size:clamp(1.6rem,5vw,2.4rem);font-weight:800;letter-spacing:-.04em;white-space:nowrap}
+.mq-b::after{content:"";width:13px;height:20px;margin:0 2rem;background:var(--acc);clip-path:polygon(60% 0,0 58%,45% 58%,32% 100%,100% 38%,52% 38%)}
+.mq-c{white-space:nowrap;margin-right:.6rem;padding:.4rem .9rem;border:1px solid var(--line);border-radius:999px;background:var(--card);font-weight:600;font-size:.9rem}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s,transform .6s}.rv.in{opacity:1;transform:none}
+.tag.late{animation:pulse 2.2s infinite}
+nav a.on svg{animation:bounce .45s}
+#msg{animation:drop .3s}
+</style>
+</head>
+<body>
+<header><a class="brand" href="#/" style="color:inherit;text-decoration:none"><svg width="36" height="36" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#0b1a33" stroke="#2a5bff" stroke-width="1.5"/><circle cx="24" cy="24" r="14" fill="none" stroke="#2a5bff" stroke-width="4"/><path d="M26 8 14 26h8l-2 14 14-20h-8z" fill="#ffd400"/></svg>L'Atelier Volt</a><span id="who"></span></header>
+<div id="cookie">Ce site n'utilise que le stockage strictement nécessaire à ta connexion : aucun traceur, aucune publicité, aucune mesure d'audience. <a href="#/confidentialite">En savoir plus</a>. <button onclick="localStorage.setItem('ck','1');this.parentNode.style.display='none'">OK</button></div>
+<main id="app"></main>
+<footer><a href="#/mentions">Mentions légales</a><a href="#/cgu">CGU</a><a href="#/confidentialite">Confidentialité</a><a href="#/cookies">Cookies</a><a href="#" id="ct">Contact et signalement</a></footer>
+<nav id="nav"></nav>
+<div id="msg" role="status"></div>
+
+<script>
+/* ====== CONFIG : à remplacer par tes valeurs Supabase (Project Settings > API) ====== */
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_ANON_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
+/* ====== Infos légales : à compléter ====== */
+const EDITEUR = {nom:"[NOM PRÉNOM]", adresse:"[ADRESSE POSTALE]", email:"[EMAIL DE CONTACT]"};
+
+const DEMO = SUPABASE_URL.includes("VOTRE");
+function mockSb(){
+ const g=k=>JSON.parse(localStorage.getItem("demo_"+k)||"[]"), p=(k,v)=>localStorage.setItem("demo_"+k,JSON.stringify(v)), ok=()=>Promise.resolve({});
+ let cb=()=>{}; const U=()=>({id:"demo",email:"demo@exemple.fr",user_metadata:JSON.parse(localStorage.getItem("demo_meta")||"{}")});
+ const tb=t=>({
+  select(){const r=Promise.resolve({data:g(t)});r.order=()=>Promise.resolve({data:g(t)});return r},
+  upsert(r){const a=g(t),o=a.find(x=>x.id===r.id);p(t,a.filter(x=>x.id!==r.id).concat({...o,...r}));return ok()},
+  insert(r){const a=g(t);a.push({...r,id:crypto.randomUUID(),created_at:new Date().toISOString()});p(t,a);return ok()},
+  update(v){return {eq(c,x){p(t,g(t).map(r=>r[c]==x?{...r,...v}:r));return ok()}}},
+  delete(){return {eq(c,x){p(t,g(t).filter(r=>r[c]!=x));if(t=="scooters")p("logs",g("logs").filter(r=>r.scooter_id!=x));return ok()}}}});
+ const auth={signInWithPassword(){localStorage.setItem("demo_on","1");cb("SIGNED_IN",{user:U()});return ok()},
+  signUp(a){localStorage.setItem("demo_meta",JSON.stringify(((a||{}).options||{}).data||{}));return auth.signInWithPassword()},signOut(){localStorage.removeItem("demo_on");cb("SIGNED_OUT",null);return ok()},
+  resetPasswordForEmail:ok,updateUser(d){const m=JSON.parse(localStorage.getItem("demo_meta")||"{}");localStorage.setItem("demo_meta",JSON.stringify({...m,...((d||{}).data||{})}));return Promise.resolve({data:{user:U()}})},signInWithOtp:ok,registerPasskey(){localStorage.setItem("demo_pk","1");return ok()},passkey:{list:()=>Promise.resolve({data:localStorage.getItem("demo_pk")?[{id:1}]:[]})},signInWithPasskey(){return auth.signInWithPassword()},signInWithOAuth(){return auth.signInWithPassword()},onAuthStateChange(f){cb=f;setTimeout(()=>f("INITIAL_SESSION",localStorage.getItem("demo_on")?{user:U()}:null))}};
+ return {from:tb,auth,rpc(n,a){ if(n==="username_available") return Promise.resolve({data:true});
+  if(n==="leaderboard"){const pr=g("profiles")[0],k=(a||{}).kind,rd=g("rides").filter(r=>r.source===k),mo=new Date().toISOString().slice(0,7),sm=x=>x.reduce((y,r)=>y+(+r.km),0);
+   const me=pr&&pr.public_ranking&&pr.username?[{username:pr.username,km_month:sm(rd.filter(r=>r.ride_on.startsWith(mo))),km_total:sm(rd),rides:rd.length}]:[];
+   const fake=k==="gps"?[{username:"exemple_camille",km_month:64.2,km_total:402,rides:24},{username:"exemple_lea",km_month:18.9,km_total:131,rides:9}]:[{username:"exemple_malik",km_month:120,km_total:2210,rides:60},{username:"exemple_camille",km_month:84.5,km_total:612,rides:31}];
+   return Promise.resolve({data:[...fake,...me]})}
+  ["scooters","logs","rides","profiles"].forEach(k=>localStorage.removeItem("demo_"+k));return ok()}};
+}
+const sb = DEMO ? mockSb() : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{experimental:{passkey:true}}});
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const toast = t => { const m=$("#msg"); m.textContent=t; m.style.display="block"; setTimeout(()=>m.style.display="none",3500); };
+
+/* ====== Modèles ====== */
+const MODELS = {
+ "Kukirin":["G2 Pro","G2 Max","G3","G3 Pro","G4","G5","M4 Pro","M5","S1 Pro"],
+ "Xiaomi":["Mi Electric Scooter 1S","Mi Electric Scooter Essential","Mi Electric Scooter Pro 2","Mi Electric Scooter 3","Electric Scooter 4 Lite","Electric Scooter 4","Electric Scooter 4 Pro","Electric Scooter 4 Ultra"],
+ "Ninebot (Segway)":["ES2","ES4","Max G30","Max G30D","Max G2","F2","F2 Pro","E2 Pro","P65","P100","GT1"],
+ "Dualtron":["Mini","Spider","Storm","Thunder 3","Victor","Achilleus","Eagle"],
+ "Kaabo":["Mantis","Mantis King GT","Wolf Warrior"],
+ "Vsett":["8","9","10","11+"],
+ "Minimotors (Speedway)":["Speedway 4","Speedway 5","Speedway Leger"],
+ "Teverun":["Blade Mini","Fighter Mini"],
+ "Nami":["Burn-E","Klima"],
+ "Mercane":["WideWheel","WideWheel Pro"],
+ "Navee":["N65","S65","V50"],
+ "Joyor":["S5","S10","Y10"],
+ "Inokim":["OX","OXO"],
+ "Apollo":["City","Explore","Ghost","Phantom"],
+ "Zero":["8","9","10X","11X"],
+ "Ducati":["Pro-I Evo","Pro-II Evo","Pro-III"],
+ "Cecotec":["Bongo Serie A"],
+ "Hiboy":["S2","S2 Pro","MAX3"],
+ "Gotrax":["G2","GXL V2","Apex"],
+ "Unagi":["Model One"],
+ "Autre":["Autre modèle (non listé)"]
+};
+const ALL = Object.entries(MODELS).flatMap(([b,l]) => l.map(m => b+" "+m));
+
+/* ====== Tâches d'entretien (valeurs indicatives, à adapter au manuel du constructeur) ====== */
+const TASKS = [
+ {id:"pression", n:"Contrôler la pression des pneus", km:0, mois:1},
+ {id:"vis", n:"Resserrer vis, potence et fixations", km:300, mois:2},
+ {id:"freins", n:"Contrôler freins et usure des plaquettes", km:500, mois:3},
+ {id:"plaquettes", n:"Changer les plaquettes de frein", km:2000, mois:0},
+ {id:"liquide", n:"Purge / liquide de frein (si frein hydraulique)", km:0, mois:12},
+ {id:"cables", n:"Contrôler câbles, connecteurs et prises", km:0, mois:3},
+ {id:"batterie", n:"Contrôler la batterie (gonflement, charge, stockage)", km:0, mois:3},
+ {id:"pneus", n:"Contrôler l'usure des pneus / les remplacer", km:3000, mois:0},
+ {id:"nettoyage", n:"Nettoyer la trottinette (sans jet haute pression)", km:0, mois:1}
+];
+
+let user=null, scooters=[], logs=[], rides=[], profile=null;
+
+/* ====== Données ====== */
+async function load(){
+ const a = await sb.from("scooters").select("*").order("created_at");
+ const b = await sb.from("logs").select("*").order("done_on",{ascending:false});
+ scooters=a.data||[]; logs=(b.data||[]).sort((x,y)=>String(y.done_on).localeCompare(String(x.done_on)));
+ const c=await sb.from("profiles").select("*"); profile=(c.data||[])[0]||null;
+ if(!profile&&user.user_metadata&&user.user_metadata.username){const {error}=await sb.from("profiles").upsert({id:user.id,username:user.user_metadata.username,public_ranking:false}); if(!error){const c2=await sb.from("profiles").select("*"); profile=(c2.data||[])[0]||null}}
+ const d=await sb.from("rides").select("*").order("ride_on",{ascending:false}); rides=(d.data||[]).sort((x,y)=>String(y.ride_on).localeCompare(String(x.ride_on)));
+}
+
+/* ====== Routeur ====== */
+const LOGO = n => `<svg width="${n}" height="${n}" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#0b1a33" stroke="#2a5bff" stroke-width="1.5"/><circle cx="24" cy="24" r="14" fill="none" stroke="#2a5bff" stroke-width="4"/><path d="M26 8 14 26h8l-2 14 14-20h-8z" fill="#ffd400"/></svg>`;
+const SC = `<svg viewBox="0 0 220 110" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"><circle cx="40" cy="86" r="18"/><circle cx="180" cy="86" r="18"/><path d="M40 86h140M180 86 164 20M146 18h36"/></svg>`;
+const NAV = {
+ accueil:["Accueil",'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>'],
+ trajets:["Trajets",'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>'],
+ carnet:["Carnet",'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM8 4v16"/>'],
+ classement:["Classement",'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>'],
+ plus:["Plus",'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
+};
+const PUBLIC = ["bienvenue","inscription","connexion","mentions","cgu","confidentialite","cookies"];
+async function route(){
+ let r = location.hash.replace("#/","") || (user?"accueil":"bienvenue");
+ if(!user && !PUBLIC.includes(r)) return location.hash="#/bienvenue";
+ if(user && ["connexion","inscription","bienvenue"].includes(r)) r="accueil";
+ document.body.className=(!user&&r==="bienvenue")?"land":"";
+ $("#nav").innerHTML = user ? Object.entries(NAV).map(([k,[n,d]])=>`<a href="#/${k}" class="${(k===r||(k==="plus"&&["trottinettes","rappels","guides","compte"].includes(r)))?"on":""}"><svg viewBox="0 0 24 24">${d}</svg>${n}</a>`).join("") : "";
+ $("#who").innerHTML = user ? `<button class="sec" style="margin:0" id="out">Déconnexion</button>` : (r==="connexion"||r==="inscription"?"":`<a class="btn" href="#/connexion" style="margin:0;padding:.45rem .9rem">Se connecter</a>`);
+ if(user) $("#out").onclick = async()=>{await sb.auth.signOut()};
+ if(user) await load();
+ if(user && !(user.user_metadata&&user.user_metadata.cgu_accepted_at&&profile&&profile.username) && !["mentions","cgu","confidentialite","cookies"].includes(r)){$("#nav").innerHTML="";$("#app").innerHTML="";return vOnboard()}
+ if(splashPending){splashPending=false; showSplash(profile&&profile.username)}
+ const v = {accueil:vHome,trajets:vRides,classement:vRank,plus:vPlus,trottinettes:vScoot,carnet:vLog,rappels:vDue,guides:vGuides,compte:vAccount,connexion:vLogin,inscription:vSignup,bienvenue:vLanding,mentions:vMentions,cgu:vCgu,confidentialite:vPriv,cookies:vCookies}[r] || (user?vHome:vLanding);
+ $("#app").innerHTML=""; v(); window.scrollTo(0,0);
+ const kn=document.getElementById("kmn"); if(kn) countUp(kn);
+ [...$("#app").children].forEach((e,i)=>{if(!e.classList.contains("lp-hero")) e.style.animationDelay=Math.min(i,8)*55+"ms"});
+ const rv=document.querySelectorAll(".rv"); if(rv.length){const io="IntersectionObserver" in window&&!REDUCED?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15}):null; rv.forEach((el,i)=>{el.style.transitionDelay=(i%3)*90+"ms"; io?io.observe(el):el.classList.add("in")})}
+ if(r==="accueil"&&user&&sb.auth.registerPasskey&&!sessionStorage.getItem("pk_shown")&&!localStorage.getItem("pk_never_"+user.id)) pkCheck();
+}
+window.addEventListener("hashchange",route);
+
+/* ====== Auth ====== */
+const GLOGO = `<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const KEY = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.8 12.2 20 3M17 6l3 3M14 9l2.5 2.5"/></svg>`;
+const DEMOBOX = () => DEMO ? `<div class="demo"><b>Mode démo</b> : le site n'est pas encore relié à Supabase. Tu peux tout tester avec n'importe quel email et mot de passe ; les données restent sur cet appareil.</div>` : "";
+const google = async () => {const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin}}); if(error) toast(error.message)};
+const PSEUDO_OK = u => /^[A-Za-z0-9_]{3,20}$/.test(u);
+
+function vLanding(){
+ const ico=d=>`<div class="ico"><svg viewBox="0 0 24 24">${d}</svg></div>`;
+ const BR=Object.keys(MODELS).filter(b=>b!=="Autre"), MD=ALL.filter(x=>!x.startsWith("Autre")), brs=[...BR,...BR].map(b=>`<span class="mq-b">${esc(b)}</span>`).join(""), mds=[...MD,...MD].map(m=>`<span class="mq-c">${esc(m)}</span>`).join("");
+ const F=[[NAV.carnet[1],"Un carnet qui se remplit tout seul","Note chaque intervention avec sa date, ses km et son coût. Tout est là quand tu en as besoin."],
+  ['<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',"Des rappels au bon moment","L'appli suit tes kilomètres et le temps qui passe, et te dit ce qui est à faire."],
+  ['<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',"Le suivi GPS de tes sorties","Distance, durée, courbe de vitesse et tracé : chaque sortie met ton compteur à jour."],
+  [NAV.trajets[1],"Des itinéraires sur mesure","Une boucle de la distance que tu veux, ou un trajet de A à B, avec l'estimation de batterie."],
+  [NAV.classement[1],"Des classements, si tu le veux","Compare tes kilomètres avec les autres, en tracé GPS ou en déclaré. Tu choisis d'y apparaître."],
+  ['<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',"L'assurance sous contrôle","Renseigne la fin de ta validité et sois prévenu avant qu'elle expire."]];
+ $("#app").innerHTML=`<section class="lp-hero"><div class="lp-in"><div><h1>Ta trottinette mérite un vrai carnet.</h1><p>Entretien, sorties, itinéraires et rappels : tout ce qu'il faut pour rouler sereinement, au même endroit.</p>
+ <div class="lp-cta"><a class="btn light" href="#/inscription">Créer un compte</a><a class="btn line" href="#/connexion">Se connecter</a></div></div>
+ <div class="lp-art"><svg viewBox="0 0 460 300" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="road" d="M10 284h440" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-dasharray="14 12"/><g class="ride"><path class="beam" d="M372 70 450 36v70z" fill="#fff" opacity=".2"/><g stroke="#2de0b0" stroke-width="9"><path d="M100 226h260M360 226 326 56M290 50h74M46 204a54 54 0 0 1 108 0"/><circle cx="100" cy="226" r="46"/><circle cx="360" cy="226" r="46"/></g><g stroke="#2de0b0" stroke-width="3" opacity=".7"><circle cx="100" cy="226" r="30"/><circle cx="360" cy="226" r="30"/></g><g class="spin" style="transform-origin:100px 226px" stroke="#2de0b0" stroke-width="4"><path d="M100 196v60M70 226h60M79 205l42 42M121 205l-42 42"/></g><g class="spin" style="transform-origin:360px 226px" stroke="#2de0b0" stroke-width="4"><path d="M360 196v60M330 226h60M339 205l42 42M381 205l-42 42"/></g><circle cx="100" cy="226" r="10" fill="#2de0b0"/><circle cx="360" cy="226" r="10" fill="#2de0b0"/><rect x="132" y="200" width="196" height="22" rx="11" fill="#fff"/><path d="M236 203l-9 11h7l-3 9 11-13h-7z" fill="#3a3dff"/><rect x="316" y="30" width="30" height="16" rx="5" fill="#fff"/><path d="M286 50h-8M368 50h10" stroke="#fff" stroke-width="12"/><circle cx="60" cy="198" r="6" fill="#ff6b6b" stroke="none"/><circle cx="374" cy="72" r="7" fill="#fff" stroke="none"/></g></svg>
+ <div class="lp-chip">18 km/h</div><div class="lp-card"><b>Plaquettes de frein</b> <span class="tag soon">Bientôt</span><div class="bar"><i class="soon" style="width:82%"></i></div><small>Dernière vérification il y a 4 mois</small></div></div></div></section>
+ <section class="mq-wrap" aria-label="Marques compatibles"><p class="mute">Compatible avec une vingtaine de marques</p><div class="mq" aria-hidden="true"><div class="mq-t">${brs}</div></div><div class="mq rev" aria-hidden="true"><div class="mq-t">${mds}</div></div><p class="mute" style="margin-top:.9rem">Ton modèle n'est pas dans la liste ? Choisis « Autre » : le carnet fonctionne pareil.</p></section>
+ <section class="lp-sec"><h2 class="rv">Tout pour rouler sereinement</h2><div class="lp-list">${F.map(([d,t,x])=>`<div class="rv">${ico(d)}<div><h3>${t}</h3><p>${x}</p></div></div>`).join("")}</div></section>
+ <section class="lp-sec"><h2 class="rv">Prêt en trois étapes</h2><ol class="steps"><li class="rv"><h3>Ajoute ta trottinette</h3><p>Choisis ton modèle parmi une vingtaine de marques et indique ton kilométrage.</p></li><li class="rv"><h3>Note tes sorties</h3><p>À la main ou avec le GPS : tes km alimentent ton carnet.</p></li><li class="rv"><h3>Suis tes rappels</h3><p>Sache ce qui est à faire avant que ça ne pose problème.</p></li></ol></section>
+ <section class="lp-band rv"><h2>Prends en main l'entretien de ta trottinette.</h2><p>Gratuit, sans publicité, et tes données restent privées.</p><a class="btn light" href="#/inscription">Créer un compte</a></section>`;
+}
+
+function vLogin(){
+ $("#app").innerHTML=`<div class="authc">${DEMOBOX()}<div class="card"><div class="mark">${LOGO(44)}</div><h1>Content de te revoir</h1>
+ <label for="e">Email</label><input id="e" type="email" autocomplete="email username webauthn">
+ <label for="p">Mot de passe</label><input id="p" type="password" autocomplete="current-password">
+ <div class="btnrow"><button id="in">Se connecter</button><button class="gbtn" id="gg" type="button">${GLOGO}Avec Google</button></div>
+ <button class="sec kbtn" id="pk" type="button">${KEY}Passkey</button>
+ <p class="mute" style="margin:1rem 0 0"><a href="#" id="fg">Mot de passe oublié ?</a> · <a href="#" id="ml">Recevoir un lien de connexion par email</a></p></div>
+ <a class="btn sec" href="#/inscription" style="display:block;margin:0">Nouvel arrivant ? Créer un compte</a></div>`;
+ $("#in").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("#e").value,password:$("#p").value}); if(error) toast("Connexion impossible : "+error.message)};
+ $("#gg").onclick=google;
+ $("#pk").onclick=async()=>{if(!sb.auth.signInWithPasskey) return toast("Clés d'accès indisponibles."); const {error}=await sb.auth.signInWithPasskey(); if(error) toast("Clé d'accès : "+error.message)};
+ $("#fg").onclick=async e=>{e.preventDefault(); if(!$("#e").value) return toast("Saisis ton email d'abord.");
+  await sb.auth.resetPasswordForEmail($("#e").value,{redirectTo:location.origin}); toast("Si le compte existe, un email vient d'être envoyé.")};
+ $("#ml").onclick=async e=>{e.preventDefault(); if(!$("#e").value) return toast("Saisis ton email d'abord.");
+  await sb.auth.signInWithOtp({email:$("#e").value,options:{shouldCreateUser:false,emailRedirectTo:location.origin}}); toast("Si le compte existe, un lien de connexion vient d'être envoyé.")};
+}
+
+function vSignup(){
+ $("#app").innerHTML=`<div class="authc">${DEMOBOX()}<div class="card"><div class="mark">${LOGO(44)}</div><h1>Crée ton compte</h1>
+ <label for="e">Email</label><input id="e" type="email" autocomplete="email">
+ <label for="us">Pseudo</label><input id="us" maxlength="20" autocomplete="nickname" placeholder="3 à 20 lettres, chiffres ou _">
+ <label for="p">Mot de passe (8 caractères minimum)</label><input id="p" type="password" autocomplete="new-password">
+ <label class="chk"><input id="ok" type="checkbox"><span>J'ai lu et j'accepte les <a href="#/cgu">CGU</a>, j'ai pris connaissance de la <a href="#/confidentialite">politique de confidentialité</a> et j'ai 15 ans ou plus.</span></label>
+ <div class="btnrow"><button id="up">Créer mon compte</button><button class="gbtn" id="gg" type="button">${GLOGO}Avec Google</button></div></div>
+ <a class="btn sec" href="#/connexion" style="display:block;margin:0">Déjà un compte ? Se connecter</a></div>`;
+ $("#gg").onclick=google;
+ $("#up").onclick=async()=>{
+  const u=$("#us").value.trim();
+  if(!PSEUDO_OK(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
+  if($("#p").value.length<8) return toast("Mot de passe trop court.");
+  if(!$("#ok").checked) return toast("Coche la case d'acceptation des CGU.");
+  const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris.");
+  const {error}=await sb.auth.signUp({email:$("#e").value,password:$("#p").value,options:{data:{username:u,cgu_accepted_at:new Date().toISOString()}}});
+  toast(error? "Création impossible : "+error.message : "Compte créé. Vérifie ta boîte mail si une confirmation est demandée.");
+ };
+}
+
+function vOnboard(){
+ $("#app").innerHTML=`<div class="card"><h1>Bienvenue !</h1><p class="mute">Dernière étape avant de commencer.</p>
+ <label for="us">Choisis ton pseudo</label><input id="us" maxlength="20" autocomplete="nickname" value="${esc((profile||{}).username||"")}" placeholder="3 à 20 lettres, chiffres ou _">
+ <label class="chk"><input id="ok" type="checkbox"><span>J'ai lu et j'accepte les <a href="#/cgu">CGU</a>, j'ai pris connaissance de la <a href="#/confidentialite">politique de confidentialité</a> et j'ai 15 ans ou plus.</span></label>
+ <button id="fin">Terminer</button><button class="sec" id="lo">Me déconnecter</button></div>`;
+ $("#lo").onclick=()=>sb.auth.signOut();
+ $("#fin").onclick=async()=>{const u=$("#us").value.trim();
+  if(!PSEUDO_OK(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
+  if(!$("#ok").checked) return toast("Coche la case d'acceptation des CGU.");
+  if(u.toLowerCase()!==((profile||{}).username||"").toLowerCase()){const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris.")}
+  const {error}=await sb.from("profiles").upsert({id:user.id,username:u,public_ranking:!!(profile&&profile.public_ranking)});
+  if(error) return toast(error.code==="23505"?"Ce pseudo est déjà pris.":"Erreur : "+error.message);
+  const r=await sb.auth.updateUser({data:{cgu_accepted_at:new Date().toISOString()}}); if(r.data&&r.data.user) user=r.data.user; route()};
+}
+
+/* ====== Mes trottinettes ====== */
+const ins = s => { if(!s.insurance_until) return ["soon","Assurance : date non renseignée"]; const d=Math.round((new Date(s.insurance_until)-Date.now())/864e5); return d<0?["late","Assurance expirée"]:d<=30?["soon","Assurance : "+d+" j restants"]:["fine","Assurance valable"]; };
+function vScoot(){
+ const opts = Object.entries(MODELS).map(([b,l])=>`<optgroup label="${esc(b)}">${l.map(m=>`<option>${esc(b+" "+m)}</option>`).join("")}</optgroup>`).join("");
+ $("#app").innerHTML=`<h1>Mes trottinettes</h1>`+
+ (scooters.map(s=>{const i=ins(s);return `<div class="card"><div class="scoot">${SC}<div><h3>${esc(s.nickname||s.model)}</h3><div class="mute">${esc(s.model)}</div></div></div><span class="tag ${i[0]}">${i[1]}</span>
+  <div class="row"><div><label for="k${s.id}">Kilométrage</label><input type="number" min="0" id="k${s.id}" value="${s.km}"></div>
+  <div><label for="i${s.id}">Assurance valable jusqu'au</label><input type="date" id="i${s.id}" value="${esc(s.insurance_until||"")}"></div>
+  <div><label for="n${s.id}">Numéro de série (facultatif)</label><input id="n${s.id}" maxlength="60" value="${esc(s.serial||"")}"></div></div>
+  <button data-k="${s.id}">Enregistrer</button><button class="danger" data-d="${s.id}">Supprimer</button></div>`}).join("")||`<p class="mute">Aucune trottinette. Ajoute la tienne ci-dessous.</p>`)+
+ `<div class="card"><h2>Ajouter une trottinette</h2>
+ <label for="m">Modèle</label><select id="m">${opts}</select>
+ <div id="cmw" style="display:none"><label for="cm">Précise le modèle</label><input id="cm" maxlength="60"></div>
+ <div class="row"><div><label for="nn">Surnom (facultatif)</label><input id="nn" maxlength="40"></div><div><label for="kk">Kilométrage actuel</label><input id="kk" type="number" min="0" value="0"></div></div>
+ <button id="add">Ajouter</button></div>`;
+ $("#m").value = ALL.find(x=>x==="Kukirin G2 Pro")||ALL[0];
+ $("#m").onchange=()=>{$("#cmw").style.display=$("#m").value.startsWith("Autre")?"block":"none"};
+ $("#add").onclick=async()=>{let m=$("#m").value; if(m.startsWith("Autre")) m="Autre – "+($("#cm").value||"modèle non précisé");
+  const {error}=await sb.from("scooters").insert({user_id:user.id,model:m,nickname:$("#nn").value||null,km:+$("#kk").value||0}); error?toast("Erreur : "+error.message):route()};
+ document.querySelectorAll("[data-k]").forEach(b=>b.onclick=async()=>{const id=b.dataset.k,k=$("#k"+id).value; if(k===""||+k<0)return toast("Saisis un kilométrage valide.");
+  const {error}=await sb.from("scooters").update({km:+k,insurance_until:$("#i"+id).value||null,serial:$("#n"+id).value||null}).eq("id",id); error?toast("Erreur : "+error.message):(toast("Enregistré."),route())});
+ document.querySelectorAll("[data-d]").forEach(b=>b.onclick=async()=>{if(confirm("Supprimer cette trottinette et son carnet ?")){await sb.from("scooters").delete().eq("id",b.dataset.d); route()}});
+}
+
+/* ====== Carnet ====== */
+function vLog(){
+ if(!scooters.length){$("#app").innerHTML=`<h1>Carnet</h1><p>Ajoute d'abord une <a href="#/trottinettes">trottinette</a>.</p>`;return}
+ const today=new Date().toISOString().slice(0,10);
+ $("#app").innerHTML=`<h1>Carnet d'entretien</h1><div class="card"><h2>Noter une intervention</h2>
+ <label for="s">Trottinette</label><select id="s">${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select>
+ <label for="t">Intervention</label><select id="t">${TASKS.map(t=>`<option value="${t.id}">${esc(t.n)}</option>`).join("")}<option value="autre">Autre (préciser en note)</option></select>
+ <div class="row"><div><label for="d">Date</label><input id="d" type="date" value="${today}"></div><div><label for="kl">Kilométrage</label><input id="kl" type="number" min="0"></div><div><label for="cs">Coût en € (facultatif)</label><input id="cs" type="number" min="0" step="0.01"></div></div>
+ <label for="n">Note</label><input id="n" maxlength="200"><button id="sv">Enregistrer</button></div>`+
+ (logs.map(l=>{const s=scooters.find(x=>x.id===l.scooter_id);const t=TASKS.find(x=>x.id===l.task);
+  return `<div class="card"><b>${esc(t?t.n:"Autre")}</b><div class="mute">${esc(l.done_on)} · ${l.km} km${l.cost!=null?" · "+l.cost+" €":""} · ${esc(s?(s.nickname||s.model):"")}</div>${l.note?`<div>${esc(l.note)}</div>`:""}<button class="sec" data-x="${l.id}">Supprimer</button></div>`}).join(""));
+ const sync=()=>{const s=scooters.find(x=>x.id==$("#s").value); $("#kl").value=s?s.km:""}; $("#s").onchange=sync; sync();
+ $("#sv").onclick=async()=>{const {error}=await sb.from("logs").insert({user_id:user.id,scooter_id:$("#s").value,task:$("#t").value,done_on:$("#d").value,km:+$("#kl").value||0,cost:$("#cs").value?+$("#cs").value:null,note:$("#n").value||null}); error?toast("Erreur : "+error.message):route()};
+ document.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{await sb.from("logs").delete().eq("id",b.dataset.x); route()});
+}
+
+/* ====== Calculs ====== */
+const calc = s => TASKS.map(t=>{
+ const last=logs.find(l=>l.scooter_id===s.id&&l.task===t.id); let r,why;
+ if(last){const rk=t.km?(s.km-last.km)/t.km:0, rm=t.mois?(Date.now()-new Date(last.done_on))/2629800000/t.mois:0; r=Math.max(rk,rm); why=`Dernière fois : ${last.done_on} (${last.km} km)`}
+ else{r=t.mois?(Date.now()-new Date(s.created_at))/2629800000/t.mois:0; why="Pas encore noté"}
+ return {t,r,why}}).sort((a,b)=>b.r-a.r);
+const st = r => r>=1?["late","À faire"]:r>=.8?["soon","Bientôt"]:["fine","OK"];
+const CHECK = `<div class="card"><h2>Avant de rouler</h2><label class="chk"><input type="checkbox"><span>Pneus en bon état et correctement gonflés</span></label><label class="chk"><input type="checkbox"><span>Frein avant et frein arrière répondent bien</span></label><label class="chk"><input type="checkbox"><span>Éclairage, feu stop et avertisseur sonore fonctionnent</span></label><label class="chk"><input type="checkbox"><span>Guidon, potence et pliage bien verrouillés</span></label><label class="chk"><input type="checkbox"><span>Batterie assez chargée pour le trajet</span></label><label class="chk"><input type="checkbox"><span>Casque et protections (fortement recommandés)</span></label></div>`;
+
+/* ====== Accueil ====== */
+function vHome(){
+ const name=profile&&profile.username?esc(profile.username):"";
+ if(!scooters.length){$("#app").innerHTML=`<section class="panel"><span>${name?"Bienvenue "+name:"Bienvenue"}</span><h1>Ajoute ta première trottinette</h1><a class="btn light" style="margin:0" href="#/trottinettes">Ajouter ma trottinette</a></section>`+CHECK;return}
+ const eur=logs.reduce((a,l)=>a+(+l.cost||0),0), km=scooters.reduce((a,s)=>a+s.km,0), p=n=>n>1?"s":"";
+ $("#app").innerHTML=`<section class="panel"><span>${name?"Salut "+name:"Tableau de bord"}</span><div class="big" style="margin-top:.5rem"><span id="kmn">${km}</span><small> km au compteur</small></div></section>
+ <div class="stats3"><div class="tile"><b>${scooters.length}</b>trottinette${p(scooters.length)}</div><div class="tile"><b>${logs.length}</b>intervention${p(logs.length)}</div><div class="tile"><b>${Math.round(eur)} €</b>dépensés</div></div>`+
+ scooters.map(s=>{const c=calc(s),late=c.filter(x=>x.r>=1),soon=c.filter(x=>x.r>=.8&&x.r<1),i=ins(s);
+  return `<div class="card"><div class="scoot">${SC}<div><h3>${esc(s.nickname||s.model)}</h3><div class="mute">${esc(s.model)}, ${s.km} km</div></div></div>
+  <span class="tag ${i[0]}">${i[1]}</span>${late.length?`<span class="tag late">${late.length} à faire</span>`:""}${soon.length?`<span class="tag soon">${soon.length} bientôt</span>`:""}${!late.length&&!soon.length?`<span class="tag fine">Entretien à jour</span>`:""}
+  ${late.concat(soon).slice(0,3).map(x=>`<div class="mute">${esc(x.t.n)}</div>`).join("")}<a class="btn" href="#/carnet">Noter une intervention</a></div>`}).join("")+CHECK;
+}
+
+/* ====== Rappels ====== */
+function vDue(){
+ if(!scooters.length){$("#app").innerHTML=`<h1>Rappels</h1><p>Ajoute d'abord une <a href="#/trottinettes">trottinette</a>.</p>`;return}
+ let h=`<h1>Rappels</h1><p class="mute">Intervalles indicatifs : réfère-toi toujours au manuel de ton modèle.</p>`;
+ scooters.forEach(s=>{h+=`<h2>${esc(s.nickname||s.model)}</h2>`;
+  calc(s).forEach(({t,r,why})=>{const c=st(r), every=[t.km?t.km+" km":"",t.mois?t.mois+" mois":""].filter(Boolean).join(" ou ");
+   h+=`<div class="card"><span class="tag ${c[0]}">${c[1]}</span> <b>${esc(t.n)}</b><div class="mute">Tous les ${every} · ${why}</div><div class="bar"><i class="${c[0]}" style="width:${Math.min(100,Math.round(r*100))}%"></i></div></div>`});});
+ $("#app").innerHTML=h;
+}
+
+/* ====== Guides ====== */
+const GUIDES = [
+ ["Vérifier la pression des pneus",["Éteins la trottinette.","Retire le capuchon de valve et mesure avec un manomètre.","Compare avec la pression indiquée sur le flanc du pneu ou dans le manuel.","Gonfle ou dégonfle, puis remets le capuchon."]],
+ ["Resserrer les fixations",["Éteins la trottinette et pose-la sur un sol stable.","Contrôle potence, guidon, garde-boue, étriers de frein et verrou de pliage.","Resserre sans forcer, si possible avec les couples indiqués dans le manuel.","Si un verrou de pliage a du jeu, ne roule pas : fais-le contrôler."]],
+ ["Contrôler les plaquettes de frein",["Éteins la trottinette et regarde l'épaisseur de garniture dans l'étrier.","Compare avec la limite d'usure indiquée par le constructeur.","Le disque doit être propre : pas d'huile ni de graisse.","Après tout changement, teste le freinage à faible vitesse dans un endroit dégagé."]],
+ ["Prendre soin de la batterie",["Utilise uniquement le chargeur d'origine.","Évite les décharges complètes et les températures extrêmes (chaleur, gel).","Pour un stockage long, laisse-la à moitié chargée environ.","Batterie gonflée, chaude ou abîmée : n'utilise plus ni ne recharge. Contacte un professionnel ou un point de collecte."]],
+ ["Nettoyer sans abîmer",["Éteins la trottinette et débranche le chargeur.","Utilise un chiffon humide, jamais de jet haute pression.","Évite le port de charge, l'écran et les connecteurs.","Sèche avant de recharger ou de ranger."]],
+ ["Crevaison",["Roue sans moteur : un kit de réparation adapté à ton type de pneu peut dépanner.","Roue avec moteur : le démontage touche à l'électricité, consulte le manuel ou un réparateur.","Dans tous les cas, vérifie ensuite l'état du pneu et la pression."]]
+];
+function vGuides(){
+ $("#app").innerHTML=`<h1>Guides</h1><div class="warnbox"><b>Sécurité d'abord.</b> Ces guides sont généraux. Le manuel de ton modèle prime, et en cas de doute, va voir un réparateur.</div>`+
+ GUIDES.map(([t,s])=>`<details><summary>${esc(t)}</summary><ol>${s.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>`).join("");
+}
+
+/* ====== Cartes, GPS, trajets ====== */
+const D2R = Math.PI/180;
+const hav = (a,b) => {const R=6371000,x=Math.sin((b.lat-a.lat)*D2R/2)**2+Math.cos(a.lat*D2R)*Math.cos(b.lat*D2R)*Math.sin((b.lon-a.lon)*D2R/2)**2; return 2*R*Math.asin(Math.sqrt(x))};
+const dest = (la,lo,km,deg) => [la+km/111.32*Math.cos(deg*D2R), lo+km/111.32*Math.sin(deg*D2R)/Math.cos(la*D2R)];
+async function osrm(pts){
+ const r=await fetch("https://routing.openstreetmap.de/routed-bike/route/v1/driving/"+pts.map(p=>p[1]+","+p[0]).join(";")+"?overview=full&geometries=geojson"); const j=await r.json();
+ if(j.code!=="Ok") throw new Error("Aucun itinéraire trouvé"); return j.routes[0];
+}
+const lbl = f => {const p=f.properties; return [p.name,[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.county].filter(Boolean).join(" ")].filter((x,i,a)=>x&&a.indexOf(x)===i).join(", ")};
+function ac(id){
+ const i=$("#"+id), box=document.createElement("div"); box.className="ac"; i.parentNode.appendChild(box); let t;
+ i.addEventListener("input",()=>{delete i.dataset.lat; delete i.dataset.lon; clearTimeout(t); box.innerHTML="";
+  const q=i.value.trim(); if(q.length<3) return;
+  if(!$("#gc").checked){box.innerHTML=`<div class="mute" style="padding:.6rem">Coche d'abord l'accord d'envoi des adresses.</div>`;return}
+  t=setTimeout(async()=>{try{const j=await (await fetch("https://photon.komoot.io/api/?lang=fr&limit=5&q="+encodeURIComponent(q))).json(); box.innerHTML="";
+   (j.features||[]).forEach(f=>{const b=document.createElement("button"); b.type="button"; b.textContent=lbl(f); b.onclick=()=>{i.value=lbl(f); i.dataset.lat=f.geometry.coordinates[1]; i.dataset.lon=f.geometry.coordinates[0]; box.innerHTML=""}; box.appendChild(b)});
+   if(!box.children.length) box.innerHTML=`<div class="mute" style="padding:.6rem">Aucun résultat.</div>`}catch(e){box.innerHTML=""}},350)});
+}
+const pos = (id,n) => {const i=$("#"+id); if(!i.dataset.lat) throw new Error("Choisis "+n+" dans la liste de suggestions."); return [+i.dataset.lat,+i.dataset.lon]};
+function mapSvg(c){
+ if(c.length<2) return "";
+ const lo=c.map(p=>p[0]), la=c.map(p=>p[1]), x0=Math.min(...lo), y1=Math.max(...la), k=Math.cos(la[0]*D2R);
+ const w=(Math.max(...lo)-x0)*k||1e-4, h=(y1-Math.min(...la))||1e-4, s=Math.min(280/w,200/h);
+ const pts=c.map(p=>`${(10+(p[0]-x0)*k*s).toFixed(1)},${(10+(y1-p[1])*s).toFixed(1)}`), a=pts[0].split(","), z=pts[pts.length-1].split(",");
+ return `<svg viewBox="0 0 ${Math.ceil(w*s+20)} ${Math.ceil(h*s+20)}" style="width:100%;max-height:300px;background:var(--bg);border-radius:12px;margin-top:.8rem"><polyline points="${pts.join(" ")}" fill="none" stroke="var(--acc)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${a[0]}" cy="${a[1]}" r="6" fill="var(--ok)"/><circle cx="${z[0]}" cy="${z[1]}" r="6" fill="var(--warn)"/></svg>`;
+}
+const curve = t => {
+ if(!t||t.length<2) return "";
+ const T=t[t.length-1][0]||1, M=Math.max(30,...t.map(p=>p[3])), y=v=>(95-v/M*80).toFixed(1), x=s=>(8+s/T*284).toFixed(1);
+ return `<svg viewBox="0 0 300 110" style="width:100%;margin-top:.6rem"><line x1="8" x2="292" y1="${y(25)}" y2="${y(25)}" stroke="var(--warn)" stroke-dasharray="4 4"/><text x="292" y="${+y(25)-3}" text-anchor="end" font-size="10" fill="var(--warn)">25 km/h</text><polyline fill="none" stroke="var(--acc)" stroke-width="2" points="${t.map(p=>x(p[0])+","+y(p[3])).join(" ")}"/></svg>`;
+};
+
+/* --- Suivi GPS --- */
+let tk=null, rt=null;
+function tkStart(sid){
+ if(!navigator.geolocation){toast("Géolocalisation indisponible sur cet appareil.");return false}
+ tk={pts:[],dist:0,mov:0,t0:Date.now(),v:0,vmax:0,vs:[],last:null,sid:sid||null};
+ tk.wid=navigator.geolocation.watchPosition(onPos,e=>{toast("GPS : "+(e.code===1?"autorisation refusée.":"position indisponible."));if(e.code===1){tkStop();tk=null;if($("#tkp"))tkRender()}},{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+ const wl=()=>{if(navigator.wakeLock) navigator.wakeLock.request("screen").then(l=>{if(tk)tk.wl=l}).catch(()=>{})};
+ wl(); tk.vc=()=>{if(document.visibilityState==="visible"&&tk&&!tk.done) wl()}; document.addEventListener("visibilitychange",tk.vc);
+ tk.tick=setInterval(tkDraw,1000); return true;
+}
+function onPos(p){
+ if(!tk||tk.done) return; const c=p.coords; if(c.accuracy>40) return;
+ const q={t:p.timestamp,lat:c.latitude,lon:c.longitude};
+ if(tk.last){const dt=(q.t-tk.last.t)/1000; if(dt<1) return; const d=hav(tk.last,q), v=d/dt*3.6;
+  if(v>60) return;
+  if(d<4){tk.v=0;return}
+  tk.dist+=d; tk.mov+=dt; tk.v=v; tk.vs.push(v); if(tk.vs.length>3) tk.vs.shift();
+  tk.vmax=Math.max(tk.vmax,tk.vs.reduce((a,b)=>a+b,0)/tk.vs.length)}
+ tk.pts.push({t:q.t,lat:q.lat,lon:q.lon,v:tk.v}); tk.last=q;
+}
+function tkStop(){
+ if(!tk||tk.done) return; navigator.geolocation.clearWatch(tk.wid); clearInterval(tk.tick); document.removeEventListener("visibilitychange",tk.vc);
+ if(tk.wl) tk.wl.release().catch(()=>{}); tk.end=Date.now(); tk.done=true;
+}
+function tkDraw(){
+ if(!tk||tk.done) return; const e=document.getElementById("l-v"); if(!e) return;
+ e.textContent=tk.v.toFixed(1); $("#l-d").textContent=(tk.dist/1000).toFixed(2);
+ const s=Math.round((Date.now()-tk.t0)/1000); $("#l-t").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); $("#l-n").textContent=tk.pts.length;
+}
+function tkPanel(){
+ if(!tk) return `<p class="mute">Lance le suivi au départ, garde cette page ouverte au premier plan avec l'écran allumé, puis termine à l'arrivée. Ne manipule pas ton téléphone en roulant. Ta position n'est lue que pendant le suivi.</p>
+ <label for="tsc">Trottinette</label><select id="tsc"><option value="">Aucune</option>${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select><button id="t0">Démarrer le suivi</button>`;
+ if(!tk.done) return `<div class="stats"><div class="card stat"><b id="l-v">0</b>km/h</div><div class="card stat"><b id="l-d">0.00</b>km</div><div class="card stat"><b id="l-t">0:00</b>durée</div><div class="card stat"><b id="l-n">0</b>points GPS</div></div><button class="danger" id="t1">Terminer</button>`;
+ const km=tk.dist/1000, dur=(tk.end-tk.t0)/1000, avg=tk.mov?km/(tk.mov/3600):0;
+ if(km<.2) return `<p>Trajet trop court pour être enregistré.</p><button class="sec" id="tx">Fermer</button>`;
+ return `<div class="stats"><div class="card stat"><b>${km.toFixed(2)}</b>km</div><div class="card stat"><b>${Math.round(dur/60)}</b>minutes</div><div class="card stat"><b>${avg.toFixed(1)}</b>km/h en moyenne</div><div class="card stat"><b>${tk.vmax.toFixed(1)}</b>km/h maximum</div></div>
+ ${curve(tk.pts.map(p=>[(p.t-tk.t0)/1000,0,0,p.v]))}${mapSvg(tk.pts.map(p=>[p.lon,p.lat]))}
+ <label class="chk"><input id="tm" type="checkbox" checked><span>Masquer les 150 premiers et derniers mètres du tracé enregistré (protège ton domicile).</span></label>
+ <label class="chk"><input id="ta" type="checkbox" checked><span>Ajouter ces km au compteur de la trottinette</span></label>
+ <button id="ts">Enregistrer la sortie</button><button class="sec" id="tx">Supprimer</button>`;
+}
+function tkRender(){$("#tkp").innerHTML=tkPanel(); const g=id=>document.getElementById(id);
+ if(g("t0")) g("t0").onclick=()=>{if(tkStart($("#tsc").value)) tkRender()};
+ if(g("t1")) g("t1").onclick=()=>{tkStop(); tkRender()};
+ if(g("tx")) g("tx").onclick=()=>{tk=null; tkRender()};
+ if(g("ts")) g("ts").onclick=tkSave;
+}
+async function tkSave(){
+ const km=tk.dist/1000, dur=Math.round((tk.end-tk.t0)/1000), avg=tk.mov?km/(tk.mov/3600):0;
+ if(avg>45) return toast("Vitesse moyenne incohérente pour une trottinette : sortie non enregistrée.");
+ let pts=tk.pts; if($("#tm").checked&&pts.length){const a=pts[0], z=pts[pts.length-1]; pts=pts.filter(p=>hav(a,p)>150&&hav(z,p)>150)}
+ const st=Math.ceil(pts.length/300)||1, track=pts.filter((_,i)=>i%st===0).map(p=>[Math.round((p.t-tk.t0)/1000),+p.lat.toFixed(5),+p.lon.toFixed(5),+p.v.toFixed(1)]);
+ const {error}=await sb.from("rides").insert({user_id:user.id,scooter_id:tk.sid,ride_on:new Date().toISOString().slice(0,10),km:+km.toFixed(1),title:"Sortie GPS",source:"gps",duration_s:dur,max_kmh:+tk.vmax.toFixed(1),avg_kmh:+avg.toFixed(1),track});
+ if(error) return toast("Erreur : "+error.message);
+ if(tk.sid&&$("#ta").checked){const s=scooters.find(x=>x.id===tk.sid); if(s) await sb.from("scooters").update({km:Math.round(s.km+km)}).eq("id",tk.sid)}
+ tk=null; route();
+}
+
+/* --- Page Trajets --- */
+function vRides(){
+ const today=new Date().toISOString().slice(0,10), now=new Date();
+ const mk=[...Array(6)].map((_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1),k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  return {l:d.toLocaleDateString("fr-FR",{month:"short"}),v:rides.filter(r=>String(r.ride_on).startsWith(k)).reduce((a,r)=>a+(+r.km),0)}});
+ const mx=Math.max(1,...mk.map(m=>m.v));
+ const chart=`<svg viewBox="0 0 300 120" style="width:100%">${mk.map((m,i)=>{const h=m.v/mx*70;return `<rect x="${i*50+8}" y="${90-h}" width="34" height="${h}" rx="6" fill="var(--acc)"/><text x="${i*50+25}" y="${84-h}" text-anchor="middle" font-size="11" fill="var(--ink)">${m.v?Math.round(m.v):""}</text><text x="${i*50+25}" y="108" text-anchor="middle" font-size="11" fill="var(--mute)">${esc(m.l)}</text>`}).join("")}</svg>`;
+ $("#app").innerHTML=`<h1>Trajets</h1>
+ <div class="card"><h2>Suivre ma sortie (GPS)</h2><div id="tkp"></div></div>
+ <div class="card"><h2>Générer un itinéraire</h2>
+ <label class="chk"><input id="gc" type="checkbox" ${localStorage.getItem("geo_ok")==="1"?"checked":""}><span>J'accepte que ce que je tape dans les champs d'adresse soit envoyé à Photon (Komoot) pour les suggestions, et que les points du trajet soient envoyés à FOSSGIS pour calculer l'itinéraire. Voir la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>
+ <div class="acw"><label for="a">Départ</label><input id="a" autocomplete="off" placeholder="Tape une adresse puis choisis dans la liste"></div><button class="sec" id="my" type="button">Utiliser ma position</button>
+ <div class="row"><div><label for="md">Type</label><select id="md"><option value="loop">Boucle depuis le départ</option><option value="ab">De A à B</option></select></div><div><label for="au">Autonomie réelle (km)</label><input id="au" type="number" min="3" value="${esc(localStorage.getItem("au")||20)}"></div></div>
+ <div id="wl"><label for="dk">Distance voulue (km)</label><input id="dk" type="number" min="1" max="60" value="10"></div>
+ <div id="wb" style="display:none" class="acw"><label for="b">Arrivée</label><input id="b" autocomplete="off" placeholder="Tape une adresse puis choisis dans la liste"></div>
+ <button id="go">Générer</button><div id="res"></div><p class="mute">Données cartographiques © contributeurs OpenStreetMap.</p></div>
+ <div class="card"><h2>Ajouter une sortie à la main</h2><p class="mute">Compte dans le classement « déclaré ».</p>
+ <div class="row"><div><label for="rd">Date</label><input id="rd" type="date" value="${today}"></div><div><label for="rk">Distance (km)</label><input id="rk" type="number" min="0" step="0.1"></div></div>
+ <label for="rsc">Trottinette</label><select id="rsc"><option value="">Aucune</option>${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select>
+ <label for="rt">Titre (facultatif)</label><input id="rt" maxlength="60">
+ <label class="chk"><input id="ra" type="checkbox" checked><span>Ajouter ces km au compteur de la trottinette</span></label><button id="sr">Enregistrer</button></div>
+ <div class="card"><h2>Km par mois</h2>${chart}</div>`+
+ rides.slice(0,20).map(r=>{const s=scooters.find(x=>x.id===r.scooter_id), g=r.source==="gps"&&r.track;
+  return `<details><summary><b>${esc(r.title||"Sortie")}</b> <span class="tag ${r.source==="gps"?"fine":"neutral"}">${r.source==="gps"?"GPS":"Déclarée"}</span><br><span class="mute">${esc(r.ride_on)} · ${r.km} km${s?" · "+esc(s.nickname||s.model):""}</span></summary>
+  ${r.source==="gps"?`<p class="mute">Moyenne ${r.avg_kmh} km/h · maximum ${r.max_kmh} km/h · ${Math.round(r.duration_s/60)} min</p>`:""}${g?curve(r.track)+mapSvg(r.track.map(p=>[p[2],p[1]])):""}
+  <button class="sec" data-rx="${r.id}">Supprimer</button></details>`}).join("");
+ tkRender(); ac("a"); ac("b");
+ $("#md").onchange=()=>{const ab=$("#md").value==="ab"; $("#wb").style.display=ab?"block":"none"; $("#wl").style.display=ab?"none":"block"};
+ $("#my").onclick=()=>{if(!navigator.geolocation) return toast("Géolocalisation indisponible."); navigator.geolocation.getCurrentPosition(p=>{$("#a").value="Ma position"; $("#a").dataset.lat=p.coords.latitude; $("#a").dataset.lon=p.coords.longitude},()=>toast("Position indisponible ou refusée."),{enableHighAccuracy:true,timeout:15000})};
+ $("#go").onclick=async()=>{
+  if(!$("#gc").checked) return toast("Accepte l'envoi des adresses pour utiliser cette fonction.");
+  localStorage.setItem("geo_ok","1"); localStorage.setItem("au",$("#au").value);
+  try{
+   const A=pos("a","le départ"), ab=$("#md").value==="ab", B=ab?pos("b","l'arrivée"):null; let r;
+   $("#res").innerHTML=`<p class="mute">Calcul en cours…</p>`;
+   if(ab) r=await osrm([A,B]);
+   else{const T=+$("#dk").value||10; let R=T/3.9; const th=Math.random()*360;
+    for(let i=0;i<2;i++){r=await osrm([A,dest(A[0],A[1],R,th),dest(A[0],A[1],R,th+60),A]); const k=r.distance/1000; if(Math.abs(k-T)/T<.25)break; R*=T/k}}
+   rt=r; showRoute();
+  }catch(e){$("#res").innerHTML=`<p class="mute">${esc(DEMO&&/fetch|Failed|network/i.test(e.message)?"Cette fonction ne peut pas être testée dans l'aperçu : elle marchera sur le site déployé.":"Échec : "+e.message)}</p>`}
+ };
+ $("#sr").onclick=async()=>{const km=+$("#rk").value; if(!(km>0&&km<=300)) return toast("Saisis une distance entre 0 et 300 km.");
+  const sid=$("#rsc").value||null; const {error}=await sb.from("rides").insert({user_id:user.id,scooter_id:sid,ride_on:$("#rd").value,km,title:$("#rt").value||null,source:"declared"});
+  if(error) return toast("Erreur : "+error.message);
+  if(sid&&$("#ra").checked){const s=scooters.find(x=>x.id===sid); await sb.from("scooters").update({km:Math.round(s.km+km)}).eq("id",sid)}
+  route()};
+ document.querySelectorAll("[data-rx]").forEach(b=>b.onclick=async()=>{await sb.from("rides").delete().eq("id",b.dataset.rx); route()});
+}
+function showRoute(){
+ const c=rt.geometry.coordinates, km=rt.distance/1000, au=+$("#au").value||20, pct=Math.round(km/au*100);
+ $("#res").innerHTML=`${mapSvg(c)}
+ <p><b>${km.toFixed(1)} km</b> · environ ${Math.round(km/18*60)} min à 18 km/h · <span class="tag ${pct>80?"late":pct>60?"soon":"fine"}">≈ ${pct} % de batterie</span></p>
+ <p class="mute">Itinéraire calculé pour le vélo : vérifie qu'il est autorisé aux trottinettes (ni trottoir, ni voie rapide, ni zone interdite) et respecte la limite de 25 km/h. L'estimation de batterie est indicative.</p>
+ <button class="sec" id="rg">Autre proposition</button><button class="sec" id="gpx">Télécharger le GPX</button><button id="rs">Reporter la distance</button>`;
+ $("#rg").onclick=()=>$("#go").click();
+ $("#rs").onclick=()=>{$("#rk").value=km.toFixed(1); $("#rk").scrollIntoView({block:"center"})};
+ $("#gpx").onclick=()=>{const g=`<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="L'Atelier Volt" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Itinéraire L'Atelier Volt</name><trkseg>${c.map(p=>`<trkpt lat="${p[1]}" lon="${p[0]}"/>`).join("")}</trkseg></trk></gpx>`;
+  const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([g],{type:"application/gpx+xml"})); l.download="itineraire.gpx"; l.click()};
+}
+
+/* ====== Classement ====== */
+async function vRank(){
+ const me=profile||{};
+ $("#app").innerHTML=`<h1>Classements</h1><div class="warnbox"><b>Tracé GPS</b> : sorties enregistrées avec le suivi. <b>Déclaré</b> : km saisis à la main.</div>
+ <div class="card"><h2>Ma participation</h2>${me.username?`<label class="chk"><input id="pp" type="checkbox" ${me.public_ranking?"checked":""}><span>Je veux apparaître dans les classements sous le pseudo <b>${esc(me.username)}</b>. Mon pseudo, mes km du mois, mes km totaux et mon nombre de sorties seront visibles par les autres utilisateurs connectés. Je peux changer d'avis à tout moment en décochant cette case.</span></label><button id="sp">Enregistrer</button>`:`<p>Choisis d'abord un pseudo dans <a href="#/compte">Compte</a>.</p>`}</div><div id="lb"><p class="mute">Chargement…</p></div>`;
+ if(me.username) $("#sp").onclick=async()=>{const {error}=await sb.from("profiles").upsert({id:user.id,username:me.username,public_ranking:$("#pp").checked}); toast(error?"Erreur : "+error.message:"Enregistré."); if(!error) route()};
+ const D={gps:(await sb.rpc("leaderboard",{kind:"gps"})).data||[], declared:(await sb.rpc("leaderboard",{kind:"declared"})).data||[]};
+ let kind="gps", k="km_month";
+ const draw=()=>{const rows=[...D[kind]].sort((a,b)=>b[k]-a[k]), B=(a,l,on)=>`<button class="${on?"":"sec"}" data-${a[0]}="${a[1]}">${l}</button>`;
+  $("#lb").innerHTML=`<div class="card">${B(["g","gps"],"Tracé GPS",kind==="gps")}${B(["g","declared"],"Déclaré",kind==="declared")}<br>${B(["s","km_month"],"Ce mois-ci",k==="km_month")}${B(["s","km_total"],"Total",k==="km_total")}${B(["s","rides"],"Sorties",k==="rides")}`+
+  (rows.length?rows.map((r,i)=>`<div style="display:grid;grid-template-columns:2rem 1fr auto;margin-top:.6rem;${me.username===r.username?"font-weight:700;color:var(--acc)":""}"><span>${i+1}</span><span>${esc(r.username)}</span><span>${k==="rides"?r[k]:(+r[k]).toFixed(1)+" km"}</span></div>`).join(""):`<p class="mute">Personne dans ce classement pour l'instant.</p>`)+
+  (DEMO?`<p class="mute">Les pseudos « exemple_ » sont fictifs (mode démo).</p>`:"")+`</div>`;
+  document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{kind=b.dataset.g;draw()}); document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{k=b.dataset.s;draw()})};
+ draw();
+}
+
+/* ====== Plus ====== */
+function vPlus(){
+ $("#app").innerHTML=`<h1>Plus</h1>`+[["trottinettes","Mes trottinettes","Modèle, kilométrage, assurance"],["rappels","Rappels d'entretien","Ce qui est à faire"],["guides","Guides","Fiches pratiques"],["compte","Compte","Pseudo, données, clé d'accès, suppression"]].map(([h,t,d])=>`<a href="#/${h}" style="text-decoration:none;color:inherit"><div class="card"><h3>${t}</h3><div class="mute">${d}</div></div></a>`).join("");
+}
+
+/* ====== Compte (RGPD : export + suppression) ====== */
+function vAccount(){
+ $("#app").innerHTML=`<h1>Compte</h1><div class="card"><p>Connecté : <b>${esc(user.email)}</b></p>
+ <label for="un">Pseudo (3 à 20 caractères : lettres, chiffres, _)</label><input id="un" maxlength="20" autocomplete="nickname" value="${esc((profile||{}).username||"")}"><button id="su">Enregistrer le pseudo</button></div>
+ <div class="card"><button id="pk">Ajouter une clé d'accès</button><button class="sec" id="ex">Télécharger mes données</button><button class="danger" id="del">Supprimer mon compte</button>
+ <p class="mute">Une clé d'accès (empreinte, visage ou code de ton appareil) te permet de te connecter sans mot de passe. La suppression efface définitivement ton compte et toutes tes données.</p></div>`;
+ $("#su").onclick=async()=>{const u=$("#un").value.trim(); if(!/^[A-Za-z0-9_]{3,20}$/.test(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
+  const {error}=await sb.from("profiles").upsert({id:user.id,username:u,public_ranking:!!(profile&&profile.public_ranking)});
+  toast(error?(error.code==="23505"?"Ce pseudo est déjà pris.":"Erreur : "+error.message):"Pseudo enregistré."); if(!error) route()};
+ $("#pk").onclick=async()=>{if(!sb.auth.registerPasskey) return toast("Clés d'accès indisponibles."); const {error}=await sb.auth.registerPasskey(); toast(error?"Clé d'accès : "+error.message:"Clé d'accès ajoutée.")};
+ $("#ex").onclick=()=>{const b=new Blob([JSON.stringify({email:user.email,profil:profile,scooters,logs,rides},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="mes-donnees.json";a.click()};
+ $("#del").onclick=async()=>{if(!confirm("Supprimer définitivement ton compte ?"))return; const {error}=await sb.rpc("delete_my_account"); if(error) return toast("Erreur : "+error.message); await sb.auth.signOut(); toast("Compte supprimé.")};
+}
+
+/* ====== Pages légales ====== */
+const N = "L'Atelier Volt";
+const L = t => `<div class="card legal"><p><a href="#" onclick="history.back();return false">← Retour</a></p>${t}</div>`;
+const E = () => `${esc(EDITEUR.nom)}, ${esc(EDITEUR.adresse)}, ${esc(EDITEUR.email)}`;
+const vMentions = () => $("#app").innerHTML = L(`<h1>Mentions légales</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+<h3>1. Éditeur du site</h3><p>${N} est édité par ${E()}. Directeur de la publication : ${esc(EDITEUR.nom)}. Le site est un projet non commercial et gratuit.</p>
+<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : [RÉGION, ex. Union européenne].</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL).</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
+<h3>3. Contact</h3><p>Par email : ${esc(EDITEUR.email)}. Par courrier : ${esc(EDITEUR.adresse)}. Nous répondons en français, en principe sous 7 jours ouvrés.</p>
+<h3>4. Signalement de contenus illicites</h3><p>Tu peux signaler un contenu que tu estimes illicite en écrivant à l'adresse ci-dessus, en indiquant : la page concernée, une description du contenu, les raisons pour lesquelles il est illicite, ton nom et ton adresse email. Ce point de contact unique est aussi destiné aux autorités des États membres (règlement (UE) 2022/2065, dit « DSA »). Les contenus saisis par les utilisateurs sont privés et visibles uniquement de leur auteur, sauf le pseudo et les totaux de ceux qui ont choisi d'apparaître aux classements.</p>
+<h3>5. Propriété intellectuelle</h3><p>Le code, la structure, les textes, le logo et la charte graphique de ${N} sont protégés par le droit d'auteur. Toute reproduction ou réutilisation sans autorisation écrite est interdite. Les noms de marques et de modèles cités appartiennent à leurs titulaires, ne sont employés que pour identifier les produits, et n'impliquent aucun partenariat ni affiliation.</p>
+<h3>6. Responsabilité</h3><p>L'éditeur s'efforce de fournir des informations exactes, sans garantir qu'elles soient complètes ou à jour. Voir les <a href="#/cgu">CGU</a>.</p>
+<h3>7. Données personnelles et cookies</h3><p>Voir la <a href="#/confidentialite">politique de confidentialité</a> et la <a href="#/cookies">politique relative aux cookies</a>.</p>
+<h3>8. Accessibilité</h3><p>Le site est conçu pour être utilisable au clavier et sur mobile, avec des contrastes suffisants. Pour signaler un obstacle d'accessibilité, écris à l'adresse de contact.</p>
+<h3>9. Droit applicable</h3><p>Droit français. En cas de litige, voir l'article 16 des <a href="#/cgu">CGU</a>.</p>`);
+const vCgu = () => $("#app").innerHTML = L(`<h1>Conditions générales d'utilisation</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+<h3>1. Objet</h3><p>${N}, édité par ${E()} (« l'Éditeur »), est un service en ligne gratuit de suivi d'entretien de trottinettes électriques : carnet d'interventions, rappels, suivi de l'assurance et guides pratiques. Les présentes conditions générales (« CGU ») régissent son utilisation.</p>
+<h3>2. Acceptation</h3><p>La création d'un compte suppose d'avoir lu les CGU et de cocher la case d'acceptation. La date d'acceptation est enregistrée. Si tu n'es pas d'accord, n'utilise pas le service.</p>
+<h3>3. Modification des CGU</h3><p>L'Éditeur peut modifier les CGU, notamment pour tenir compte de l'évolution du service ou de la loi. Les utilisateurs inscrits sont informés par email au moins 15 jours avant l'entrée en vigueur. Sans acceptation, tu peux supprimer ton compte avant cette date.</p>
+<h3>4. Accès au service</h3><p>Le service est accessible à toute personne de <b>15 ans ou plus</b> disposant d'un accès à Internet. Les coûts de connexion restent à ta charge. L'Éditeur ne garantit pas la compatibilité avec tous les appareils et navigateurs.</p>
+<h3>5. Compte</h3><p>Tu fournis une adresse email valide et un mot de passe. Tu es responsable de leur confidentialité et de toute activité sur ton compte. Le compte est personnel et non cessible. Préviens-nous sans délai en cas d'usage frauduleux. Un mot de passe oublié peut être réinitialisé par email.</p>
+<h3>6. Gratuité</h3><p>Le service est gratuit. Si une offre payante était proposée un jour, elle ferait l'objet de conditions distinctes et ne s'appliquerait qu'avec ton accord exprès.</p>
+<h3>7. Règles d'usage</h3><p>Tu t'engages à : utiliser le service de façon licite et loyale ; ne pas perturber ou surcharger son fonctionnement ; ne pas tenter d'accéder aux comptes ou données d'autres utilisateurs ; ne pas collecter de données de façon automatisée ; ne pas saisir de contenu illicite ni de données personnelles de tiers dans tes notes.</p>
+<h3>8. Tes données de carnet</h3><p>Les informations que tu saisis (trottinettes, kilométrages, assurance, numéros de série, interventions, coûts, notes) restent à toi et sont privées : seul ton compte y a accès. Tu accordes à l'Éditeur uniquement le droit de les stocker et de les traiter pour te fournir le service. Tu peux les exporter et les supprimer à tout moment depuis « Compte ». Il t'appartient de conserver une copie si tu en as besoin.</p>
+<h3>8 bis. Pseudo et classements</h3><p>Le pseudo est demandé à la création du compte. Il doit être choisi librement mais ne doit pas usurper l'identité d'un tiers, être injurieux, discriminatoire ou illicite, ni révéler de donnée personnelle. L'Éditeur peut modifier ou retirer un pseudo contraire à ces règles. Le pseudo n'est visible des autres utilisateurs que si tu choisis d'apparaître aux classements. Deux classements existent : « tracé GPS » (sorties enregistrées avec le suivi GPS) et « déclaré » (km saisis à la main, non vérifiés). Le classement « tracé GPS » n'est pas une certification : il repose sur des données de ton appareil, que l'Éditeur ne contrôle que de façon automatique et limitée. Il n'est associé à aucun gain. Toute tentative de fausser un classement (position simulée, trajet dans un autre véhicule, données inventées) peut entraîner la suppression de tes sorties ou de ton compte.</p>
+<h3>8 ter. Suivi GPS</h3><p>Le suivi GPS est facultatif et ne démarre que sur ton action. Il utilise la géolocalisation de ton appareil, que tu peux refuser ou couper à tout moment, et ne fonctionne que tant que la page reste ouverte au premier plan. Ne manipule pas ton téléphone en roulant : démarre et arrête le suivi à l'arrêt. L'Éditeur ne garantit pas la précision des mesures (distance, vitesse), qui sont indicatives et ne constituent pas un instrument de mesure légal.</p>
+<h3>8 quater. Itinéraires</h3><p>Les itinéraires proposés sont générés automatiquement à partir de données OpenStreetMap et d'un calcul prévu pour le vélo. Ils peuvent comporter des erreurs, passer par des voies interdites ou dangereuses pour une trottinette, ou être indisponibles. Tu restes seul responsable du trajet que tu empruntes, de ta vigilance et du respect du Code de la route. L'estimation de consommation de batterie est indicative.</p>
+<h3>9. Informations indicatives et sécurité</h3><p>Les intervalles d'entretien, tâches, guides, rappels, listes de modèles et suivi de l'assurance sont fournis <b>à titre indicatif</b> ; ils peuvent contenir des erreurs ou être incomplets, et ne remplacent ni le manuel du constructeur, ni l'avis d'un professionnel, ni tes obligations légales. L'entretien des freins, de la batterie, des fixations et des pneus touche à ta sécurité : en cas de doute, adresse-toi à un réparateur qualifié. Tu es seul responsable de l'état de ta trottinette, de la souscription d'une assurance de responsabilité civile et du respect du Code de la route et de la réglementation applicable aux engins de déplacement personnel motorisés.</p>
+<h3>10. Responsabilité</h3><p>L'Éditeur est tenu à une obligation de moyens. Il n'est pas responsable des dommages résultant d'une interprétation des informations du service, d'une intervention ou d'une absence d'intervention sur ta trottinette, d'une perte de données, d'une interruption du service ou d'un événement indépendant de sa volonté (force majeure, panne des prestataires, attaque informatique malgré les mesures de sécurité raisonnables), sauf faute lourde ou dolosive. Rien dans ces CGU n'exclut ni ne limite une responsabilité qui ne peut l'être en droit, notamment en cas de dommage corporel, ou les droits dont tu disposes en tant que consommateur.</p>
+<h3>11. Disponibilité et évolution du service</h3><p>Le service est fourni « en l'état », sans garantie de disponibilité continue. Des interruptions peuvent avoir lieu pour maintenance. L'Éditeur peut faire évoluer, suspendre ou arrêter le service ; en cas d'arrêt définitif, il t'en informe au moins 30 jours à l'avance et te permet d'exporter tes données.</p>
+<h3>12. Suspension et suppression de compte</h3><p>Tu peux supprimer ton compte à tout moment depuis « Compte » ; tes données sont alors effacées. L'Éditeur peut suspendre ou supprimer un compte en cas de manquement grave ou répété aux CGU, en t'indiquant les motifs et en te laissant la possibilité de présenter tes observations, sauf urgence, atteinte à la sécurité du service ou obligation légale.</p>
+<h3>13. Propriété intellectuelle et marques</h3><p>Voir les <a href="#/mentions">mentions légales</a>. Les marques citées appartiennent à leurs propriétaires et le service n'est affilié à aucune d'elles.</p>
+<h3>14. Données personnelles</h3><p>Le traitement de tes données est décrit dans la <a href="#/confidentialite">politique de confidentialité</a> et la <a href="#/cookies">politique relative aux cookies</a>.</p>
+<h3>15. Divers</h3><p>Si une clause des CGU est déclarée nulle, les autres restent applicables. Le fait de ne pas exercer un droit n'emporte pas renonciation. Les CGU sont rédigées en français ; seule cette version fait foi. Les données enregistrées par le service font foi, sauf preuve contraire, des opérations réalisées.</p>
+<h3>16. Médiation, droit applicable et juridiction</h3><p>Pour toute réclamation, écris d'abord à l'Éditeur (voir les mentions légales). Si tu es consommateur et que le litige persiste, tu peux recourir gratuitement au médiateur de la consommation : [NOM ET COORDONNÉES DU MÉDIATEUR]. Plateforme européenne de règlement en ligne des litiges : ec.europa.eu/consumers/odr. Les CGU sont soumises au droit français. Si tu es consommateur résidant dans l'Union européenne, tu conserves la protection des dispositions impératives de ton pays de résidence et peux saisir les tribunaux de ton domicile. À défaut, les tribunaux français sont compétents.</p>`);
+const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+<p>Cette politique explique comment tes données personnelles sont traitées, conformément au règlement (UE) 2016/679 (RGPD) et à la loi française Informatique et Libertés.</p>
+<h3>1. Responsable du traitement</h3><p>${E()}. Aucun délégué à la protection des données n'est désigné. Toute demande se fait à l'adresse email ci-dessus.</p>
+<h3>2. Données traitées, finalités, bases légales, durées</h3><ul>
+<li><b>Compte</b> : adresse email, pseudo, mot de passe (stocké haché, jamais lisible), date d'acceptation des CGU. Finalité : créer, sécuriser et gérer ton compte. Base légale : exécution du contrat. Durée : jusqu'à la suppression du compte.</li>
+<li><b>Carnet</b> : modèle, surnom, kilométrage, date de validité de l'assurance et numéro de série de tes trottinettes ; interventions (type, date, kilométrage, coût, note). Finalité : fournir le carnet, les rappels et le tableau de bord. Base légale : exécution du contrat. Durée : jusqu'à ta suppression de la donnée ou du compte.</li>
+<li><b>Données techniques</b> : adresse IP, date et heure, type de navigateur, erreurs, enregistrées par les hébergeurs. Finalité : sécurité, prévention des abus, bon fonctionnement. Base légale : intérêt légitime. Durée : selon les hébergeurs, de quelques jours à quelques mois.</li>
+<li><b>Classements</b> (facultatif) : ton choix d'apparaître ou non et, si tu y apparais, ton pseudo, tes km du mois, tes km totaux et ton nombre de sorties, séparément pour les sorties tracées par GPS et les sorties déclarées. Finalité : classement entre utilisateurs. Base légale : ton consentement (case à cocher), que tu peux retirer à tout moment en la décochant, sans effet sur ce qui a eu lieu avant. Ces informations ne sont visibles des autres utilisateurs connectés que si tu as coché la case. Durée : jusqu'au retrait ou à la suppression du compte.</li>
+<li><b>Sorties</b> : date, distance, titre, trottinette associée, source (déclarée ou tracée GPS). Pour une sortie tracée : durée, vitesses moyenne et maximale et tracé (points de passage, dont tu peux masquer les 150 premiers et derniers mètres). Finalité : statistiques personnelles, graphiques, mise à jour du compteur et, avec ton accord, classements. Base légale : exécution du contrat. Durée : jusqu'à suppression par toi ou du compte. Ces données restent privées, sauf les totaux affichés aux classements si tu y participes.</li>
+<li><b>Suivi GPS</b> (facultatif) : ta position est lue par ton navigateur uniquement pendant un suivi que tu lances et arrêtes toi-même, et traitée sur ton appareil jusqu'à l'enregistrement de la sortie. Base légale : ton consentement (autorisation de localisation de ton appareil, puis action de démarrage), que tu peux retirer à tout moment en refusant ou en coupant la géolocalisation.</li>
+<li><b>Itinéraires</b> (facultatif) : ce que tu tapes dans les champs d'adresse est envoyé à Photon (Komoot) pour les suggestions, et les points du trajet à FOSSGIS pour le calcul ; ils reçoivent aussi ton adresse IP. Nous ne les conservons pas. Base légale : ton consentement, demandé par une case à cocher avant la première utilisation.</li>
+<li><b>Autres modes de connexion</b> (facultatifs) : avec Google, nous recevons ton email et un identifiant ; avec une clé d'accès, seule une clé publique est stockée par Supabase, ni ta biométrie ni ta clé privée ne quittent ton appareil. Base légale : exécution du contrat.</li>
+<li><b>Emails de service</b> (confirmation d'inscription, réinitialisation de mot de passe, information sur les CGU) : strictement transactionnels, jamais de prospection. Base légale : exécution du contrat et obligation d'information.</li>
+<li><b>Demandes de contact</b> : ton message et ton email, pour y répondre. Base légale : intérêt légitime. Durée : 12 mois après le dernier échange.</li></ul>
+<p>Les données du compte et du carnet sont nécessaires pour utiliser le service : sans elles, il ne peut pas fonctionner. Aucune donnée n'est vendue, louée ni utilisée pour de la publicité ou du profilage. Aucune décision automatisée produisant des effets juridiques n'est prise. Le service ne lit ta position que pendant un suivi GPS ou une demande « Utiliser ma position » que tu lances, et ne collecte ni données de santé ni photos. Les données de localisation étant sensibles, nous te conseillons de masquer le début et la fin de tes tracés.</p>
+<h3>3. Destinataires et sous-traitants</h3><ul><li><b>Supabase Inc.</b> : authentification, base de données, envoi d'emails de service.</li><li><b>Vercel Inc.</b> : hébergement et diffusion du site.</li><li><b>jsDelivr</b> : diffusion d'une bibliothèque logicielle, ce qui implique que ton adresse IP leur soit transmise lors du chargement de la page.</li><li><b>Komoot (Photon) et FOSSGIS e.V.</b> : uniquement si tu utilises les itinéraires. <b>Google</b> : uniquement si tu choisis de te connecter avec Google.</li></ul><p>Ils agissent dans le cadre de contrats de sous-traitance. Tes données ne sont accessibles qu'à l'Éditeur et à ces prestataires. Elles peuvent être communiquées aux autorités sur réquisition légale.</p>
+<h3>4. Transferts hors de l'Union européenne</h3><p>Certains prestataires peuvent traiter des données hors de l'Union européenne, notamment aux États-Unis. Ces transferts reposent sur une décision d'adéquation de la Commission européenne (cadre de protection des données UE–États-Unis) ou sur les clauses contractuelles types, complétées de mesures de sécurité. Tu peux obtenir une copie des garanties applicables en écrivant à l'Éditeur.</p>
+<h3>5. Sécurité</h3><p>Connexion chiffrée (HTTPS), mots de passe hachés, et cloisonnement des données au niveau de la base : chaque compte ne peut lire et modifier que ses propres données. En cas de violation de données présentant un risque, l'Éditeur la notifie à la CNIL dans les 72 heures et t'en informe sans délai si le risque est élevé.</p>
+<h3>6. Tes droits</h3><p>Tu disposes des droits : d'accès, de rectification, d'effacement, de limitation, d'opposition (pour les traitements fondés sur l'intérêt légitime), de portabilité, de retrait de ton consentement le cas échéant, et de définir des directives sur le sort de tes données après ton décès.</p>
+<p><b>Comment les exercer</b> : l'export (fichier JSON) et la suppression du compte sont directement disponibles dans « Compte ». Tu peux aussi écrire à ${esc(EDITEUR.email)}. Réponse sous un mois, prolongeable de deux mois pour les demandes complexes, avec information dans le premier mois. Une pièce justificative peut être demandée en cas de doute raisonnable sur ton identité.</p>
+<p><b>Réclamation</b> : tu peux saisir la CNIL, 3 place de Fontenoy, TSA 80715, 75334 Paris Cedex 07 (cnil.fr), ou l'autorité de protection des données de ton pays de résidence.</p>
+<h3>7. Mineurs</h3><p>Le service est réservé aux personnes de 15 ans ou plus. Un compte créé par une personne plus jeune sera supprimé dès que l'Éditeur en a connaissance. Les parents peuvent le signaler à l'adresse de contact.</p>
+<h3>8. Cookies et traceurs</h3><p>Voir la <a href="#/cookies">politique relative aux cookies</a>.</p>
+<h3>9. Modifications</h3><p>Cette politique peut évoluer. Toute modification importante est signalée aux utilisateurs inscrits. La date de dernière mise à jour figure en haut de la page.</p>`);
+const vCookies = () => $("#app").innerHTML = L(`<h1>Cookies et stockage local</h1><p class="mute">Dernière mise à jour : [DATE]</p>
+<h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
+<h3>Ce que le site n'utilise pas</h3><p>Aucun cookie publicitaire, aucun outil de mesure d'audience, aucun bouton ou contenu de réseau social, aucune police ni vidéo chargée depuis un service tiers de suivi.</p>
+<h3>Consentement</h3><p>Ces éléments sont strictement nécessaires au service que tu demandes : ils sont exemptés de consentement (article 82 de la loi Informatique et Libertés). Si un traceur non essentiel était ajouté un jour, ton consentement te serait demandé <i>avant</i> tout dépôt, et tu pourrais le refuser aussi simplement que l'accepter.</p>
+<h3>Gérer ton navigateur</h3><p>Tu peux effacer le stockage local à tout moment dans les réglages de ton navigateur. Tu seras alors déconnecté.</p>`);
+document.addEventListener("click",e=>{if(e.target.id==="ct"){e.preventDefault();location.href="mailto:"+EDITEUR.email+"?subject=Contact%20L%27Atelier%20Volt"}});
+
+/* ====== Animations et fenêtres ====== */
+let splashPending=false, pendingFn=null;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const afterSplash = f => { if(document.getElementById("splash")) pendingFn=f; else f() };
+function showSplash(name){
+ if(document.getElementById("splash")) return;
+ const d=document.createElement("div"); d.id="splash";
+ d.innerHTML=`<div class="sp-in"><div class="sp-ring"><svg viewBox="0 0 96 96" fill="none"><circle cx="48" cy="48" r="42" stroke="rgba(255,255,255,.25)" stroke-width="6"/><circle class="arc" cx="48" cy="48" r="42" stroke="#2de0b0" stroke-width="6" stroke-linecap="round" stroke-dasharray="70 200"/><path d="M52 22 34 52h13l-4 22 21-32H51z" fill="#fff"/></svg></div><div class="sp-hello">Bonjour${name?",<br>"+esc(name):""}</div><div class="sp-bar"><i></i></div><div class="sp-msg" id="spm">Récupération de tes trottinettes…</div><div class="sp-skip">Touche l'écran pour passer</div></div>`;
+ document.body.appendChild(d);
+ const say=t=>setTimeout(()=>{const m=document.getElementById("spm"); if(m) m.textContent=t},0);
+ const t1=setTimeout(()=>say("Calcul de tes rappels…"),1700), t2=setTimeout(()=>say("Ton carnet est prêt !"),3400); let done=false, t3;
+ const end=()=>{if(done) return; done=true; clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); d.classList.add("out");
+  setTimeout(()=>{d.remove(); if(pendingFn){const f=pendingFn; pendingFn=null; f()}},500)};
+ t3=setTimeout(end,5000); d.onclick=end;
+}
+function countUp(el){
+ const to=+el.textContent; if(!to||REDUCED) return; const t0=performance.now(); el.textContent=0;
+ const f=t=>{const p=Math.min(1,(t-t0)/900); el.textContent=Math.round(to*(1-Math.pow(1-p,3))); if(p<1) requestAnimationFrame(f)}; requestAnimationFrame(f);
+}
+async function pkCheck(){
+ sessionStorage.setItem("pk_shown","1");
+ try{ if(sb.auth.passkey&&sb.auth.passkey.list){const {data}=await sb.auth.passkey.list(); if(data&&data.length) return} }catch(e){}
+ afterSplash(askPasskey);
+}
+function askPasskey(){
+ if(document.getElementById("pkm")||!user) return;
+ const m=document.createElement("div"); m.id="pkm"; m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.setAttribute("aria-labelledby","pkt");
+ m.innerHTML=`<div class="sheet"><div class="ico big">${KEY}</div><h2 id="pkt">Connecte-toi plus vite avec une passkey</h2><p>Une passkey remplace ton mot de passe : tu te connectes avec ton empreinte, ton visage ou le code de ton appareil. C'est plus rapide et plus sûr, car il n'y a rien à retenir et rien qui puisse être volé ou deviné.</p><p class="mute">Tu pourras aussi en ajouter une plus tard depuis Compte.</p><label class="chk"><input type="checkbox" id="pkX"><span>Ne plus me le proposer</span></label><div class="btnrow"><button id="pkY">Ajouter une passkey</button><button class="sec" id="pkN">Plus tard</button></div></div>`;
+ document.body.appendChild(m);
+ const kd=e=>{if(e.key==="Escape") close()};
+ const close=()=>{if($("#pkX")&&$("#pkX").checked) localStorage.setItem("pk_never_"+user.id,"1"); m.remove(); document.removeEventListener("keydown",kd)};
+ document.addEventListener("keydown",kd);
+ $("#pkN").onclick=close; m.addEventListener("click",e=>{if(e.target===m) close()});
+ $("#pkY").onclick=async()=>{const {error}=await sb.auth.registerPasskey(); close(); toast(error?"Passkey : "+error.message:"Passkey ajoutée.")};
+ $("#pkY").focus();
+}
+
+/* ====== Démarrage ====== */
+if(!localStorage.getItem("ck")) $("#cookie").style.display="block";
+sb.auth.onAuthStateChange((ev,session)=>{user=session?session.user:null; if(ev==="SIGNED_IN"&&/connexion|inscription|bienvenue/.test(location.hash)) location.hash="#/accueil"; if(ev==="SIGNED_IN"&&!REDUCED&&!sessionStorage.getItem("splash")){sessionStorage.setItem("splash","1"); splashPending=true}
+ if(ev==="SIGNED_OUT"){sessionStorage.removeItem("splash"); sessionStorage.removeItem("pk_shown"); location.hash="#/bienvenue"} route()});
+</script>
+</body>
+</html>
