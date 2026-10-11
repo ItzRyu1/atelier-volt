@@ -5,12 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="L'Atelier Volt : le carnet d'entretien gratuit de ta trottinette électrique. Interventions, rappels, suivi GPS, itinéraires et classements.">
 <meta name="theme-color" content="#3a3dff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="L'Atelier Volt">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <meta property="og:title" content="L'Atelier Volt">
 <meta property="og:description" content="Le carnet d'entretien de ta trottinette électrique : interventions, rappels, suivi GPS, itinéraires.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%233a3dff'/%3E%3Cpath d='M26 8 14 26h8l-2 14 14-20h-8z' fill='%23ffd400'/%3E%3C/svg%3E">
 <title>L'Atelier Volt – le carnet d'entretien de ta trottinette électrique</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <style>
 @font-face{font-family:"Space Grotesk";src:local("Space Grotesk"),url(fonts/SpaceGrotesk.woff2) format("woff2");font-weight:300 700;font-display:swap}
 :root{--bg:#f1f3fb;--card:#fff;--ink:#12132b;--mute:#5d6086;--line:#e0e3f2;--acc:#3a3dff;--acc2:#2a2ce0;--acc-ink:#fff;--soft:#e9ebff;--warn:#d9480f;--ok:#0f8a64;--tag-ink:#fff;--r:20px}
@@ -34,7 +42,7 @@ nav a.on{background:var(--acc);color:var(--acc-ink)}
 .panel .big{font-size:3.4rem;font-weight:800;letter-spacing:-.05em;line-height:1}.panel small{font-size:1rem;font-weight:500;opacity:.8;letter-spacing:0}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:.9rem}
 .stat{margin:0;font-size:.9rem;color:var(--mute)}.stat b{display:block;font-size:1.8rem;color:var(--ink);letter-spacing:-.04em;line-height:1.1}
-.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+.stats3{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:1rem}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:.8rem;font-size:.8rem;color:var(--mute)}.tile b{display:block;font-size:1.4rem;color:var(--ink);letter-spacing:-.03em}
 label{display:block;font-weight:600;font-size:.92rem;margin:.9rem 0 .3rem}
 input,select,textarea{width:100%;padding:.7rem .85rem;border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit}
@@ -147,6 +155,15 @@ nav a{transition:background .2s,color .2s}
 .tag.late{animation:pulse 2.2s infinite}
 nav a.on svg{animation:bounce .45s}
 #msg{animation:drop .3s}
+.map{height:300px;border-radius:14px;margin-top:.8rem;position:relative;z-index:0;isolation:isolate}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem}
+.badge{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1rem;text-align:center;display:grid;gap:.2rem;justify-items:center}.badge.off{opacity:.45;filter:grayscale(1)}
+#navui{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;background:var(--bg)}
+.nv-top{display:flex;gap:1rem;align-items:center;background:#3a3dff;color:#fff;padding:calc(.8rem + env(safe-area-inset-top,0px)) 1rem .8rem}
+.nv-arrow svg{width:64px;height:64px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
+.nv-dist{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1}.nv-txt{font-size:1.05rem;opacity:.95}
+#nvmap{flex:1;min-height:0;isolation:isolate;position:relative;z-index:0}
+.nv-bot{display:flex;gap:1.2rem;align-items:center;justify-content:space-between;padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom,0px));background:var(--card)}.nv-bot b{font-size:1.5rem}
 </style>
 </head>
 <body>
@@ -235,7 +252,7 @@ const TASKS = [
  {id:"nettoyage", n:"Nettoyer la trottinette (sans jet haute pression)", km:0, mois:1}
 ];
 
-let user=null, scooters=[], logs=[], rides=[], profile=null;
+let user=null, scooters=[], logs=[], rides=[], bat=[], profile=null;
 
 /* ====== Données ====== */
 async function load(){
@@ -245,6 +262,7 @@ async function load(){
  const c=await sb.from("profiles").select("*"); profile=(c.data||[])[0]||null;
  if(!profile&&user.user_metadata&&user.user_metadata.username){const {error}=await sb.from("profiles").upsert({id:user.id,username:user.user_metadata.username,public_ranking:false}); if(!error){const c2=await sb.from("profiles").select("*"); profile=(c2.data||[])[0]||null}}
  const d=await sb.from("rides").select("*").order("ride_on",{ascending:false}); rides=(d.data||[]).sort((x,y)=>String(y.ride_on).localeCompare(String(x.ride_on)));
+ const e=await sb.from("battery_logs").select("*"); bat=e.data||[];
 }
 
 /* ====== Routeur ====== */
@@ -257,24 +275,26 @@ const NAV = {
  classement:["Classement",'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>'],
  plus:["Plus",'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
 };
-const PUBLIC = ["bienvenue","inscription","connexion","mentions","cgu","confidentialite","cookies"];
+const PUBLIC = ["bienvenue","inscription","connexion","mentions","cgu","confidentialite","cookies","partage","desinscription"];
 async function route(){
- let r = location.hash.replace("#/","") || (user?"accueil":"bienvenue");
+ const raw=location.hash.replace("#/",""); hashQ=new URLSearchParams(raw.split("?")[1]||"");
+ let r = raw.split("?")[0] || (user?"accueil":"bienvenue");
  if(!user && !PUBLIC.includes(r)) return location.hash="#/bienvenue";
  if(user && ["connexion","inscription","bienvenue"].includes(r)) r="accueil";
  document.body.className=(!user&&r==="bienvenue")?"land":"";
- $("#nav").innerHTML = user ? Object.entries(NAV).map(([k,[n,d]])=>`<a href="#/${k}" class="${(k===r||(k==="plus"&&["trottinettes","rappels","guides","compte"].includes(r)))?"on":""}"><svg viewBox="0 0 24 24">${d}</svg>${n}</a>`).join("") : "";
+ $("#nav").innerHTML = user ? Object.entries(NAV).map(([k,[n,d]])=>`<a href="#/${k}" class="${(k===r||(k==="plus"&&["trottinettes","rappels","guides","compte","batterie","badges"].includes(r)))?"on":""}"><svg viewBox="0 0 24 24">${d}</svg>${n}</a>`).join("") : "";
  $("#who").innerHTML = user ? `<button class="sec" style="margin:0" id="out">Déconnexion</button>` : (r==="connexion"||r==="inscription"?"":`<a class="btn" href="#/connexion" style="margin:0;padding:.45rem .9rem">Se connecter</a>`);
  if(user) $("#out").onclick = async()=>{await sb.auth.signOut()};
  if(user) await load();
- if(user && !(user.user_metadata&&user.user_metadata.cgu_accepted_at&&profile&&profile.username) && !["mentions","cgu","confidentialite","cookies"].includes(r)){$("#nav").innerHTML="";$("#app").innerHTML="";return vOnboard()}
+ if(user && !(user.user_metadata&&user.user_metadata.cgu_accepted_at&&profile&&profile.username) && !["mentions","cgu","confidentialite","cookies","partage","desinscription"].includes(r)){$("#nav").innerHTML="";$("#app").innerHTML="";return vOnboard()}
  if(splashPending){splashPending=false; showSplash(profile&&profile.username)}
- const v = {accueil:vHome,trajets:vRides,classement:vRank,plus:vPlus,trottinettes:vScoot,carnet:vLog,rappels:vDue,guides:vGuides,compte:vAccount,connexion:vLogin,inscription:vSignup,bienvenue:vLanding,mentions:vMentions,cgu:vCgu,confidentialite:vPriv,cookies:vCookies}[r] || (user?vHome:vLanding);
+ const v = {accueil:vHome,trajets:vRides,partage:vShare,desinscription:vUnsub,batterie:vBattery,badges:vBadges,classement:vRank,plus:vPlus,trottinettes:vScoot,carnet:vLog,rappels:vDue,guides:vGuides,compte:vAccount,connexion:vLogin,inscription:vSignup,bienvenue:vLanding,mentions:vMentions,cgu:vCgu,confidentialite:vPriv,cookies:vCookies}[r] || (user?vHome:vLanding);
  $("#app").innerHTML=""; v(); window.scrollTo(0,0);
  const kn=document.getElementById("kmn"); if(kn) countUp(kn);
  [...$("#app").children].forEach((e,i)=>{if(!e.classList.contains("lp-hero")) e.style.animationDelay=Math.min(i,8)*55+"ms"});
  const rv=document.querySelectorAll(".rv"); if(rv.length){const io="IntersectionObserver" in window&&!REDUCED?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15}):null; rv.forEach((el,i)=>{el.style.transitionDelay=(i%3)*90+"ms"; io?io.observe(el):el.classList.add("in")})}
  if(r==="accueil"&&user&&sb.auth.registerPasskey&&!sessionStorage.getItem("pk_shown")&&!localStorage.getItem("pk_never_"+user.id)) pkCheck();
+ if(r==="accueil"&&user&&!isStandalone()&&!localStorage.getItem("inst_never")&&!sessionStorage.getItem("inst_shown")){sessionStorage.setItem("inst_shown","1"); setTimeout(()=>whenFree(askInstall),1500)}
 }
 window.addEventListener("hashchange",route);
 
@@ -365,7 +385,7 @@ function vScoot(){
   <div class="row"><div><label for="k${s.id}">Kilométrage</label><input type="number" min="0" id="k${s.id}" value="${s.km}"></div>
   <div><label for="i${s.id}">Assurance valable jusqu'au</label><input type="date" id="i${s.id}" value="${esc(s.insurance_until||"")}"></div>
   <div><label for="n${s.id}">Numéro de série (facultatif)</label><input id="n${s.id}" maxlength="60" value="${esc(s.serial||"")}"></div></div>
-  <button data-k="${s.id}">Enregistrer</button><button class="danger" data-d="${s.id}">Supprimer</button></div>`}).join("")||`<p class="mute">Aucune trottinette. Ajoute la tienne ci-dessous.</p>`)+
+  <button data-k="${s.id}">Enregistrer</button><button class="sec" data-pdf="${s.id}">Carnet PDF</button><button class="sec" data-fs="${s.id}">Fiche de revente</button><button class="danger" data-d="${s.id}">Supprimer</button></div>`}).join("")||`<p class="mute">Aucune trottinette. Ajoute la tienne ci-dessous.</p>`)+
  `<div class="card"><h2>Ajouter une trottinette</h2>
  <label for="m">Modèle</label><select id="m">${opts}</select>
  <div id="cmw" style="display:none"><label for="cm">Précise le modèle</label><input id="cm" maxlength="60"></div>
@@ -377,6 +397,8 @@ function vScoot(){
   const {error}=await sb.from("scooters").insert({user_id:user.id,model:m,nickname:$("#nn").value||null,km:+$("#kk").value||0}); error?toast("Erreur : "+error.message):route()};
  document.querySelectorAll("[data-k]").forEach(b=>b.onclick=async()=>{const id=b.dataset.k,k=$("#k"+id).value; if(k===""||+k<0)return toast("Saisis un kilométrage valide.");
   const {error}=await sb.from("scooters").update({km:+k,insurance_until:$("#i"+id).value||null,serial:$("#n"+id).value||null}).eq("id",id); error?toast("Erreur : "+error.message):(toast("Enregistré."),route())});
+ document.querySelectorAll("[data-pdf]").forEach(b=>b.onclick=()=>carnetPdf(scooters.find(x=>x.id===b.dataset.pdf)));
+ document.querySelectorAll("[data-fs]").forEach(b=>b.onclick=()=>fiche(scooters.find(x=>x.id===b.dataset.fs)));
  document.querySelectorAll("[data-d]").forEach(b=>b.onclick=async()=>{if(confirm("Supprimer cette trottinette et son carnet ?")){await sb.from("scooters").delete().eq("id",b.dataset.d); route()}});
 }
 
@@ -411,21 +433,44 @@ function vHome(){
  if(!scooters.length){$("#app").innerHTML=`<section class="panel"><span>${name?"Bienvenue "+name:"Bienvenue"}</span><h1>Ajoute ta première trottinette</h1><a class="btn light" style="margin:0" href="#/trottinettes">Ajouter ma trottinette</a></section>`+CHECK;return}
  const eur=logs.reduce((a,l)=>a+(+l.cost||0),0), km=scooters.reduce((a,s)=>a+s.km,0), p=n=>n>1?"s":"";
  $("#app").innerHTML=`<section class="panel"><span>${name?"Salut "+name:"Tableau de bord"}</span><div class="big" style="margin-top:.5rem"><span id="kmn">${km}</span><small> km au compteur</small></div></section>
- <div class="stats3"><div class="tile"><b>${scooters.length}</b>trottinette${p(scooters.length)}</div><div class="tile"><b>${logs.length}</b>intervention${p(logs.length)}</div><div class="tile"><b>${Math.round(eur)} €</b>dépensés</div></div>`+
+ <div class="stats3"><div class="tile"><b>${scooters.length}</b>trottinette${p(scooters.length)}</div><div class="tile"><b>${logs.length}</b>intervention${p(logs.length)}</div><div class="tile"><b>${Math.round(eur)} €</b>dépensés</div><div class="tile"><b>${km>0&&eur>0?(eur/km*100).toFixed(1).replace(".",",")+" c":"—"}</b>coût par km</div></div>`+
  scooters.map(s=>{const c=calc(s),late=c.filter(x=>x.r>=1),soon=c.filter(x=>x.r>=.8&&x.r<1),i=ins(s);
   return `<div class="card"><div class="scoot">${SC}<div><h3>${esc(s.nickname||s.model)}</h3><div class="mute">${esc(s.model)}, ${s.km} km</div></div></div>
   <span class="tag ${i[0]}">${i[1]}</span>${late.length?`<span class="tag late">${late.length} à faire</span>`:""}${soon.length?`<span class="tag soon">${soon.length} bientôt</span>`:""}${!late.length&&!soon.length?`<span class="tag fine">Entretien à jour</span>`:""}
-  ${late.concat(soon).slice(0,3).map(x=>`<div class="mute">${esc(x.t.n)}</div>`).join("")}<a class="btn" href="#/carnet">Noter une intervention</a></div>`}).join("")+CHECK;
+  ${late.concat(soon).slice(0,3).map(x=>`<div class="mute">${esc(x.t.n)}</div>`).join("")}<a class="btn" href="#/carnet">Noter une intervention</a></div>`}).join("")+badgeCard()+CHECK;
 }
 
-/* ====== Rappels ====== */
+/* ====== Rappels, calendrier ====== */
+const kmPerDay = () => {const lim=Date.now()-90*864e5, km=rides.filter(r=>new Date(r.ride_on).getTime()>=lim).reduce((a,r)=>a+(+r.km),0); return km/90};
+function dueDate(s,t){
+ const last=logs.find(l=>l.scooter_id===s.id&&l.task===t.id), base=last?new Date(last.done_on):new Date(s.created_at), ds=[];
+ if(t.mois){const d=new Date(base); d.setMonth(d.getMonth()+t.mois); ds.push(d)}
+ if(t.km){const rem=(last?last.km:s.km)+t.km-s.km, rate=kmPerDay(); if(rem<=0) ds.push(new Date()); else if(rate>.05){const d=new Date(); d.setDate(d.getDate()+Math.min(730,Math.round(rem/rate))); ds.push(d)}}
+ const tomorrow=()=>{const n=new Date(); n.setDate(n.getDate()+1); return n};
+ if(!ds.length){const d=new Date(); d.setDate(d.getDate()+14); return {d,est:true}}
+ const d=new Date(Math.min(...ds.map(x=>x.getTime()))); return d<new Date()?{d:tomorrow(),est:false}:{d,est:t.km>0};
+}
+const ymd = d => d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
+function askCal(title,d,est){
+ const d2=new Date(d); d2.setDate(d2.getDate()+1);
+ const desc="Rappel créé avec L'Atelier Volt. Intervalles indicatifs : réfère-toi au manuel de ton modèle.";
+ const g="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(title)+"&dates="+ymd(d)+"/"+ymd(d2)+"&details="+encodeURIComponent(desc);
+ const esc2=x=>x.replace(/[,;]/g,m=>"\\"+m);
+ const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//L'Atelier Volt//FR","BEGIN:VEVENT","UID:"+crypto.randomUUID()+"@atelier-volt","DTSTAMP:"+new Date().toISOString().replace(/[-:]|\.\d{3}/g,""),"DTSTART;VALUE=DATE:"+ymd(d),"DTEND;VALUE=DATE:"+ymd(d2),"SUMMARY:"+esc2(title),"DESCRIPTION:"+esc2(desc),"END:VEVENT","END:VCALENDAR"].join("\r\n");
+ const m=sheet("calm",`<h2>Ajouter au calendrier</h2><p><b>${esc(title)}</b><br>${esc(d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}))}${est?" (date estimée d'après ton rythme de roulage)":""}</p><p class="mute">Cet événement est ajouté une seule fois : il ne se met pas à jour tout seul. Après ton entretien, crée-en un nouveau.</p><div class="btnrow"><a class="btn" target="_blank" rel="noopener" href="${g}">Google Agenda</a><button class="sec" id="cI">Autre agenda (.ics)</button></div><button class="sec" id="cX" style="margin-top:.7rem">Fermer</button>`);
+ $("#cX").onclick=()=>m.remove();
+ $("#cI").onclick=()=>{const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"})); a.download="rappel.ics"; a.click()};
+}
 function vDue(){
  if(!scooters.length){$("#app").innerHTML=`<h1>Rappels</h1><p>Ajoute d'abord une <a href="#/trottinettes">trottinette</a>.</p>`;return}
  let h=`<h1>Rappels</h1><p class="mute">Intervalles indicatifs : réfère-toi toujours au manuel de ton modèle.</p>`;
  scooters.forEach(s=>{h+=`<h2>${esc(s.nickname||s.model)}</h2>`;
+  if(s.insurance_until){const i=ins(s); h+=`<div class="card"><span class="tag ${i[0]}">${i[1]}</span> <b>Assurance</b><div class="mute">Valable jusqu'au ${esc(s.insurance_until)}</div><button class="sec" data-ci="${s.id}">Calendrier</button></div>`}
   calc(s).forEach(({t,r,why})=>{const c=st(r), every=[t.km?t.km+" km":"",t.mois?t.mois+" mois":""].filter(Boolean).join(" ou ");
-   h+=`<div class="card"><span class="tag ${c[0]}">${c[1]}</span> <b>${esc(t.n)}</b><div class="mute">Tous les ${every} · ${why}</div><div class="bar"><i class="${c[0]}" style="width:${Math.min(100,Math.round(r*100))}%"></i></div></div>`});});
+   h+=`<div class="card"><span class="tag ${c[0]}">${c[1]}</span> <b>${esc(t.n)}</b><div class="mute">Tous les ${every}, ${why}</div><div class="bar"><i class="${c[0]}" style="width:${Math.min(100,Math.round(r*100))}%"></i></div><button class="sec" data-ct="${s.id}|${t.id}">Calendrier</button></div>`});});
  $("#app").innerHTML=h;
+ document.querySelectorAll("[data-ct]").forEach(b=>b.onclick=()=>{const [sid,tid]=b.dataset.ct.split("|"), s=scooters.find(x=>x.id===sid), t=TASKS.find(x=>x.id===tid), o=dueDate(s,t); askCal(t.n+" ("+(s.nickname||s.model)+")",o.d,o.est)});
+ document.querySelectorAll("[data-ci]").forEach(b=>b.onclick=()=>{const s=scooters.find(x=>x.id===b.dataset.ci); let d=new Date(s.insurance_until); d.setDate(d.getDate()-7); if(d<new Date()) d=new Date(); askCal("Renouveler l'assurance ("+(s.nickname||s.model)+")",d,false)});
 }
 
 /* ====== Guides ====== */
@@ -442,12 +487,14 @@ function vGuides(){
  GUIDES.map(([t,s])=>`<details><summary>${esc(t)}</summary><ol>${s.map(x=>`<li>${esc(x)}</li>`).join("")}</ol></details>`).join("");
 }
 
-/* ====== Cartes, GPS, trajets ====== */
+let hashQ = new URLSearchParams();
+/* ====== Cartes, GPS, navigation, trajets ====== */
 const D2R = Math.PI/180;
 const hav = (a,b) => {const R=6371000,x=Math.sin((b.lat-a.lat)*D2R/2)**2+Math.cos(a.lat*D2R)*Math.cos(b.lat*D2R)*Math.sin((b.lon-a.lon)*D2R/2)**2; return 2*R*Math.asin(Math.sqrt(x))};
 const dest = (la,lo,km,deg) => [la+km/111.32*Math.cos(deg*D2R), lo+km/111.32*Math.sin(deg*D2R)/Math.cos(la*D2R)];
+const geoOK = () => localStorage.getItem("geo_ok")==="1";
 async function osrm(pts){
- const r=await fetch("https://routing.openstreetmap.de/routed-bike/route/v1/driving/"+pts.map(p=>p[1]+","+p[0]).join(";")+"?overview=full&geometries=geojson"); const j=await r.json();
+ const r=await fetch("https://routing.openstreetmap.de/routed-bike/route/v1/driving/"+pts.map(p=>p[1]+","+p[0]).join(";")+"?overview=full&geometries=geojson&steps=true"); const j=await r.json();
  if(j.code!=="Ok") throw new Error("Aucun itinéraire trouvé"); return j.routes[0];
 }
 const lbl = f => {const p=f.properties; return [p.name,[p.housenumber,p.street].filter(Boolean).join(" "),[p.postcode,p.city||p.county].filter(Boolean).join(" ")].filter((x,i,a)=>x&&a.indexOf(x)===i).join(", ")};
@@ -473,30 +520,59 @@ const curve = t => {
  const T=t[t.length-1][0]||1, M=Math.max(30,...t.map(p=>p[3])), y=v=>(95-v/M*80).toFixed(1), x=s=>(8+s/T*284).toFixed(1);
  return `<svg viewBox="0 0 300 110" style="width:100%;margin-top:.6rem"><line x1="8" x2="292" y1="${y(25)}" y2="${y(25)}" stroke="var(--warn)" stroke-dasharray="4 4"/><text x="292" y="${+y(25)-3}" text-anchor="end" font-size="10" fill="var(--warn)">25 km/h</text><polyline fill="none" stroke="var(--acc)" stroke-width="2" points="${t.map(p=>x(p[0])+","+y(p[3])).join(" ")}"/></svg>`;
 };
+/* Liens de partage : tracé encodé (polyline) dans l'adresse, rien n'est stocké chez nous */
+const penc = pts => {let la=0,lo=0,o="";const e=v=>{v=v<0?~(v<<1):v<<1;let s="";while(v>=32){s+=String.fromCharCode((32|(v&31))+63);v>>=5}return s+String.fromCharCode(v+63)};for(const [x,y] of pts){const a=Math.round(y*1e5),b=Math.round(x*1e5);o+=e(a-la)+e(b-lo);la=a;lo=b}return o};
+const pdec = s => {let i=0,la=0,lo=0;const o=[],d=()=>{let r=0,sh=0,b;do{b=s.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5}while(b>=32);return r&1?~(r>>1):r>>1};while(i<s.length){la+=d();lo+=d();o.push([lo/1e5,la/1e5])}return o};
+const gpt = p => p[1].toFixed(5)+","+p[0].toFixed(5);
+const gmaps = c => {const mid=c.filter((_,i)=>i>0&&i<c.length-1&&i%Math.ceil(c.length/8)===0).slice(0,8); return "https://www.google.com/maps/dir/?api=1&travelmode=bicycling&origin="+gpt(c[0])+"&destination="+gpt(c[c.length-1])+(mid.length?"&waypoints="+mid.map(gpt).join("%7C"):"")};
+const amaps = c => "https://maps.apple.com/?dirflg=w&saddr="+gpt(c[0])+"&daddr="+gpt(c[c.length-1]);
+function leaf(el,coords,live){
+ const m=L.map(el), ll=coords.map(p=>[p[1],p[0]]);
+ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>'}).addTo(m);
+ const pl=L.polyline(ll,{color:"#3a3dff",weight:5,opacity:.9}).addTo(m);
+ if(ll.length>1) m.fitBounds(pl.getBounds(),{padding:[24,24]}); else m.setView(ll[0],15);
+ if(!live){L.circleMarker(ll[0],{radius:8,color:"#fff",weight:3,fillColor:"#0f8a64",fillOpacity:1}).addTo(m); L.circleMarker(ll[ll.length-1],{radius:8,color:"#fff",weight:3,fillColor:"#d9480f",fillOpacity:1}).addTo(m)}
+ return {m,pl};
+}
+function mapInto(el,coords){
+ if(!el) return;
+ if(geoOK()){el.innerHTML=`<div class="map"></div>`; const d=el.firstChild; setTimeout(()=>{try{leaf(d,coords)}catch(e){el.innerHTML=mapSvg(coords)}},0)}
+ else{el.innerHTML=mapSvg(coords)+`<button class="sec" type="button">Afficher la carte OpenStreetMap</button><p class="mute">La carte est chargée depuis les serveurs d'OpenStreetMap, qui reçoivent ton adresse IP.</p>`; el.querySelector("button").onclick=()=>{localStorage.setItem("geo_ok","1"); mapInto(el,coords)}}
+}
+const sheet = (id,inner) => {const m=document.createElement("div"); m.id=id; m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-modal","true"); m.innerHTML=`<div class="sheet">${inner}</div>`; m.addEventListener("click",e=>{if(e.target===m) m.remove()}); document.body.appendChild(m); return m};
 
-/* --- Suivi GPS --- */
-let tk=null, rt=null;
-function tkStart(sid){
- if(!navigator.geolocation){toast("Géolocalisation indisponible sur cet appareil.");return false}
- tk={pts:[],dist:0,mov:0,t0:Date.now(),v:0,vmax:0,vs:[],last:null,sid:sid||null};
- tk.wid=navigator.geolocation.watchPosition(onPos,e=>{toast("GPS : "+(e.code===1?"autorisation refusée.":"position indisponible."));if(e.code===1){tkStop();tk=null;if($("#tkp"))tkRender()}},{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+/* --- Suivi GPS (sauvegardé sur l'appareil) --- */
+let tk=null, rt=null, nv=null;
+const restoreTk = sv => ({pts:sv.pts.map(a=>({t:a[0],lat:a[1],lon:a[2],v:a[3]})),dist:sv.dist,mov:sv.mov,t0:sv.t0,v:0,vmax:sv.vmax,vs:[],last:null,sid:sv.sid});
+function tkPersist(){
+ if(!tk||!user) return;
+ try{localStorage.setItem("tk_save",JSON.stringify({u:user.id,t0:tk.t0,dist:tk.dist,mov:tk.mov,vmax:tk.vmax,sid:tk.sid,done:!!tk.done,end:tk.end||null,pts:tk.pts.slice(-4000).map(p=>[p.t,+p.lat.toFixed(6),+p.lon.toFixed(6),+p.v.toFixed(1)])}))}catch(e){}
+}
+function tkWatch(){
+ tk.wid=navigator.geolocation.watchPosition(onPos,e=>{toast("GPS : "+(e.code===1?"autorisation refusée.":"position indisponible."));if(e.code===1){tkStop();tk=null;if(nv)navStop(true);if($("#tkp"))tkRender()}},{enableHighAccuracy:true,maximumAge:0,timeout:20000});
  const wl=()=>{if(navigator.wakeLock) navigator.wakeLock.request("screen").then(l=>{if(tk)tk.wl=l}).catch(()=>{})};
  wl(); tk.vc=()=>{if(document.visibilityState==="visible"&&tk&&!tk.done) wl()}; document.addEventListener("visibilitychange",tk.vc);
- tk.tick=setInterval(tkDraw,1000); return true;
+ tk.tick=setInterval(tkDraw,1000);
+}
+function tkStart(sid){
+ if(!navigator.geolocation){toast("Géolocalisation indisponible sur cet appareil.");return false}
+ tk={pts:[],dist:0,mov:0,t0:Date.now(),v:0,vmax:0,vs:[],last:null,sid:sid||null}; tkWatch(); return true;
 }
 function onPos(p){
  if(!tk||tk.done) return; const c=p.coords; if(c.accuracy>40) return;
  const q={t:p.timestamp,lat:c.latitude,lon:c.longitude};
+ if(nv) navUpdate(q);
  if(tk.last){const dt=(q.t-tk.last.t)/1000; if(dt<1) return; const d=hav(tk.last,q), v=d/dt*3.6;
   if(v>60) return;
   if(d<4){tk.v=0;return}
   tk.dist+=d; tk.mov+=dt; tk.v=v; tk.vs.push(v); if(tk.vs.length>3) tk.vs.shift();
   tk.vmax=Math.max(tk.vmax,tk.vs.reduce((a,b)=>a+b,0)/tk.vs.length)}
  tk.pts.push({t:q.t,lat:q.lat,lon:q.lon,v:tk.v}); tk.last=q;
+ if(Date.now()-(tk.ps||0)>10000){tk.ps=Date.now(); tkPersist()}
 }
 function tkStop(){
  if(!tk||tk.done) return; navigator.geolocation.clearWatch(tk.wid); clearInterval(tk.tick); document.removeEventListener("visibilitychange",tk.vc);
- if(tk.wl) tk.wl.release().catch(()=>{}); tk.end=Date.now(); tk.done=true;
+ if(tk.wl) tk.wl.release().catch(()=>{}); tk.end=Date.now(); tk.done=true; tkPersist();
 }
 function tkDraw(){
  if(!tk||tk.done) return; const e=document.getElementById("l-v"); if(!e) return;
@@ -507,10 +583,10 @@ function tkPanel(){
  if(!tk) return `<p class="mute">Lance le suivi au départ, garde cette page ouverte au premier plan avec l'écran allumé, puis termine à l'arrivée. Ne manipule pas ton téléphone en roulant. Ta position n'est lue que pendant le suivi.</p>
  <label for="tsc">Trottinette</label><select id="tsc"><option value="">Aucune</option>${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select><button id="t0">Démarrer le suivi</button>`;
  if(!tk.done) return `<div class="stats"><div class="card stat"><b id="l-v">0</b>km/h</div><div class="card stat"><b id="l-d">0.00</b>km</div><div class="card stat"><b id="l-t">0:00</b>durée</div><div class="card stat"><b id="l-n">0</b>points GPS</div></div><button class="danger" id="t1">Terminer</button>`;
- const km=tk.dist/1000, dur=(tk.end-tk.t0)/1000, avg=tk.mov?km/(tk.mov/3600):0;
+ const km=tk.dist/1000, dur=((tk.end||Date.now())-tk.t0)/1000, avg=tk.mov?km/(tk.mov/3600):0;
  if(km<.2) return `<p>Trajet trop court pour être enregistré.</p><button class="sec" id="tx">Fermer</button>`;
  return `<div class="stats"><div class="card stat"><b>${km.toFixed(2)}</b>km</div><div class="card stat"><b>${Math.round(dur/60)}</b>minutes</div><div class="card stat"><b>${avg.toFixed(1)}</b>km/h en moyenne</div><div class="card stat"><b>${tk.vmax.toFixed(1)}</b>km/h maximum</div></div>
- ${curve(tk.pts.map(p=>[(p.t-tk.t0)/1000,0,0,p.v]))}${mapSvg(tk.pts.map(p=>[p.lon,p.lat]))}
+ ${curve(tk.pts.map(p=>[(p.t-tk.t0)/1000,0,0,p.v]))}<div id="tkmap"></div>
  <label class="chk"><input id="tm" type="checkbox" checked><span>Masquer les 150 premiers et derniers mètres du tracé enregistré (protège ton domicile).</span></label>
  <label class="chk"><input id="ta" type="checkbox" checked><span>Ajouter ces km au compteur de la trottinette</span></label>
  <button id="ts">Enregistrer la sortie</button><button class="sec" id="tx">Supprimer</button>`;
@@ -518,18 +594,101 @@ function tkPanel(){
 function tkRender(){$("#tkp").innerHTML=tkPanel(); const g=id=>document.getElementById(id);
  if(g("t0")) g("t0").onclick=()=>{if(tkStart($("#tsc").value)) tkRender()};
  if(g("t1")) g("t1").onclick=()=>{tkStop(); tkRender()};
- if(g("tx")) g("tx").onclick=()=>{tk=null; tkRender()};
+ if(g("tx")) g("tx").onclick=()=>{tk=null; localStorage.removeItem("tk_save"); tkRender()};
  if(g("ts")) g("ts").onclick=tkSave;
+ if(g("tkmap")) mapInto(g("tkmap"),tk.pts.map(p=>[p.lon,p.lat]));
 }
 async function tkSave(){
- const km=tk.dist/1000, dur=Math.round((tk.end-tk.t0)/1000), avg=tk.mov?km/(tk.mov/3600):0;
+ const km=tk.dist/1000, dur=Math.round(((tk.end||Date.now())-tk.t0)/1000), avg=tk.mov?km/(tk.mov/3600):0;
  if(avg>45) return toast("Vitesse moyenne incohérente pour une trottinette : sortie non enregistrée.");
  let pts=tk.pts; if($("#tm").checked&&pts.length){const a=pts[0], z=pts[pts.length-1]; pts=pts.filter(p=>hav(a,p)>150&&hav(z,p)>150)}
  const st=Math.ceil(pts.length/300)||1, track=pts.filter((_,i)=>i%st===0).map(p=>[Math.round((p.t-tk.t0)/1000),+p.lat.toFixed(5),+p.lon.toFixed(5),+p.v.toFixed(1)]);
  const {error}=await sb.from("rides").insert({user_id:user.id,scooter_id:tk.sid,ride_on:new Date().toISOString().slice(0,10),km:+km.toFixed(1),title:"Sortie GPS",source:"gps",duration_s:dur,max_kmh:+tk.vmax.toFixed(1),avg_kmh:+avg.toFixed(1),track});
  if(error) return toast("Erreur : "+error.message);
  if(tk.sid&&$("#ta").checked){const s=scooters.find(x=>x.id===tk.sid); if(s) await sb.from("scooters").update({km:Math.round(s.km+km)}).eq("id",tk.sid)}
- tk=null; route();
+ tk=null; localStorage.removeItem("tk_save"); route();
+}
+
+/* --- Navigation (sans voix) --- */
+const MOD={"left":["à gauche",-90],"right":["à droite",90],"slight left":["légèrement à gauche",-45],"slight right":["légèrement à droite",45],"sharp left":["franchement à gauche",-135],"sharp right":["franchement à droite",135],"uturn":["demi-tour",180],"straight":["tout droit",0]};
+function instr(s){
+ const m=s.maneuver, t=m.type, md=MOD[m.modifier]||["",0], n=s.name?" sur "+s.name:""; let txt;
+ if(t==="arrive") txt="Tu es arrivé";
+ else if(t==="depart") txt="Départ"+n;
+ else if(/roundabout|rotary/.test(t)) txt="Au rond-point, prends la sortie "+(m.exit||"")+n;
+ else if(m.modifier==="uturn") txt="Fais demi-tour"+n;
+ else if(t==="continue"||t==="new name"||m.modifier==="straight") txt="Continue tout droit"+n;
+ else if(t==="fork") txt="À la bifurcation, prends "+md[0]+n;
+ else if(m.modifier) txt="Tourne "+md[0]+n;
+ else txt="Continue"+n;
+ return {txt,rot:md[1]};
+}
+const flatSteps = r => r.legs.flatMap(l=>l.steps);
+function dseg(q,a,b){
+ const k=Math.cos(q.lat*D2R), X=p=>(p[0]-q.lon)*111320*k, Y=p=>(p[1]-q.lat)*110540;
+ const ax=X(a),ay=Y(a),bx=X(b),by=Y(b),dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy; let t=l?(-(ax*dx+ay*dy))/l:0; t=Math.max(0,Math.min(1,t));
+ return Math.hypot(ax+t*dx,ay+t*dy);
+}
+function navWarn(cb){
+ if(document.getElementById("nvw")) return;
+ const m=sheet("nvw",`<h2>Avant de partir</h2><p>Fixe ton téléphone au guidon avec un support et ne le manipule jamais en roulant. Respecte le Code de la route et reste attentif : les instructions peuvent être inexactes.</p><p class="mute">L'écran reste allumé et ta position est enregistrée pendant la navigation.</p><div class="btnrow"><button id="nwY">J'ai compris, démarrer</button><button class="sec" id="nwN">Annuler</button></div>`);
+ $("#nwN").onclick=()=>m.remove(); $("#nwY").onclick=()=>{m.remove(); cb()};
+}
+function navRun(r){
+ if(tk&&!tk.done) return toast("Un suivi est déjà en cours.");
+ if(!geoOK()) {localStorage.setItem("geo_ok","1")}
+ if(!tkStart(null)) return;
+ nv={r,coords:r.geometry.coordinates,st:flatSteps(r),j:1,i:0,off:0,busy:false,dest:r.geometry.coordinates[r.geometry.coordinates.length-1]};
+ const d=document.createElement("div"); d.id="navui";
+ d.innerHTML=`<div class="nv-top"><div class="nv-arrow" id="nva"></div><div><div class="nv-dist" id="nvd"></div><div class="nv-txt" id="nvt"></div></div></div><div id="nvmap"></div><div class="nv-bot"><div><b id="nvs">0</b> km/h</div><div><b id="nvk">0.0</b> km</div><button class="danger" id="nvx" style="margin:0">Terminer</button></div>`;
+ document.body.appendChild(d);
+ const o=leaf(document.getElementById("nvmap"),nv.coords,true); nv.map=o.m; nv.line=o.pl;
+ nv.me=L.circleMarker(nv.map.getCenter(),{radius:9,color:"#fff",weight:3,fillColor:"#3a3dff",fillOpacity:1}).addTo(nv.map);
+ $("#nvx").onclick=()=>navStop(); navShow(null);
+}
+function navShow(q){
+ if(!nv) return;
+ const s=nv.st[Math.min(nv.j,nv.st.length-1)], I=instr(s), dm=q?hav(q,{lat:s.maneuver.location[1],lon:s.maneuver.location[0]}):0;
+ $("#nvd").textContent=q?(dm>=1000?(dm/1000).toFixed(1)+" km":Math.round(dm/10)*10+" m"):""; $("#nvt").textContent=I.txt;
+ $("#nva").innerHTML=`<svg viewBox="0 0 24 24" style="transform:rotate(${I.rot}deg)"><path d="M12 20V4M5 11l7-7 7 7"/></svg>`;
+ if(q){nv.me.setLatLng([q.lat,q.lon]); nv.map.setView([q.lat,q.lon],Math.max(nv.map.getZoom(),16))}
+ $("#nvs").textContent=tk?tk.v.toFixed(1):"0"; $("#nvk").textContent=tk?(tk.dist/1000).toFixed(1):"0.0";
+}
+function navUpdate(q){
+ if(!nv) return;
+ const c=nv.coords; let bd=1e9, bi=nv.i;
+ const scan=(a,b)=>{for(let i=a;i<Math.min(b,c.length-1);i++){const d=dseg(q,c[i],c[i+1]); if(d<bd){bd=d;bi=i}}};
+ scan(Math.max(0,nv.i-3),nv.i+60); if(bd>50) scan(0,c.length);
+ nv.i=bi; if(bd>50){nv.off++; if(nv.off>=3) navReroute(q)} else nv.off=0;
+ const s=nv.st[nv.j]; if(s&&s.maneuver.type!=="arrive"&&hav(q,{lat:s.maneuver.location[1],lon:s.maneuver.location[0]})<25) nv.j=Math.min(nv.j+1,nv.st.length-1);
+ navShow(q);
+}
+function navReroute(q){
+ if(nv.busy) return; nv.busy=true; toast("Recalcul de l'itinéraire…");
+ osrm([[q.lat,q.lon],[nv.dest[1],nv.dest[0]]]).then(r=>{if(!nv) return; nv.r=r; nv.coords=r.geometry.coordinates; nv.st=flatSteps(r); nv.j=1; nv.i=0; nv.off=0; nv.line.setLatLngs(nv.coords.map(p=>[p[1],p[0]]))}).catch(()=>toast("Recalcul impossible.")).finally(()=>{if(nv) nv.busy=false});
+}
+function navStop(skip){
+ if(!nv) return; try{nv.map.remove()}catch(e){} const d=document.getElementById("navui"); if(d) d.remove(); nv=null; if(skip) return;
+ tkStop(); if(location.hash!=="#/trajets") location.hash="#/trajets"; else route();
+}
+
+/* --- Carte de sortie à partager --- */
+function rideCard(r){
+ const W=1080,H=1350,c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d");
+ g.fillStyle="#3a3dff"; g.fillRect(0,0,W,H);
+ g.fillStyle="#fff"; g.font="800 62px system-ui,sans-serif"; g.fillText("L'Atelier Volt",70,120);
+ g.fillStyle="rgba(255,255,255,.12)"; g.beginPath(); g.roundRect?g.roundRect(60,170,960,640,40):g.rect(60,170,960,640); g.fill();
+ const t=r.track||[]; if(t.length>1){
+  const lo=t.map(p=>p[2]), la=t.map(p=>p[1]), x0=Math.min(...lo), y1=Math.max(...la), k=Math.cos(la[0]*D2R);
+  const w=(Math.max(...lo)-x0)*k||1e-4, h=(y1-Math.min(...la))||1e-4, s=Math.min(860/w,540/h), ox=60+(960-w*s)/2, oy=170+(640-h*s)/2;
+  g.strokeStyle="#2de0b0"; g.lineWidth=12; g.lineJoin="round"; g.lineCap="round"; g.beginPath();
+  t.forEach((p,i)=>{const x=ox+(p[2]-x0)*k*s,y=oy+(y1-p[1])*s; i?g.lineTo(x,y):g.moveTo(x,y)}); g.stroke();}
+ const kt=(+r.km).toFixed(1); g.fillStyle="#fff"; g.font="800 190px system-ui,sans-serif"; const kw=g.measureText(kt).width; g.fillText(kt,70,1040); g.font="600 54px system-ui,sans-serif"; g.fillText("km",70+kw+24,1040);
+ g.font="600 46px system-ui,sans-serif"; g.fillStyle="#d6d9ff";
+ g.fillText(Math.round(r.duration_s/60)+" min   |   "+r.avg_kmh+" km/h en moyenne",70,1130); g.fillText(new Date(r.ride_on).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}),70,1200);
+ c.toBlob(async b=>{const f=new File([b],"sortie.png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:"Ma sortie"})}catch(e){}}
+  else{const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="sortie.png"; a.click()}});
 }
 
 /* --- Page Trajets --- */
@@ -539,26 +698,35 @@ function vRides(){
   return {l:d.toLocaleDateString("fr-FR",{month:"short"}),v:rides.filter(r=>String(r.ride_on).startsWith(k)).reduce((a,r)=>a+(+r.km),0)}});
  const mx=Math.max(1,...mk.map(m=>m.v));
  const chart=`<svg viewBox="0 0 300 120" style="width:100%">${mk.map((m,i)=>{const h=m.v/mx*70;return `<rect x="${i*50+8}" y="${90-h}" width="34" height="${h}" rx="6" fill="var(--acc)"/><text x="${i*50+25}" y="${84-h}" text-anchor="middle" font-size="11" fill="var(--ink)">${m.v?Math.round(m.v):""}</text><text x="${i*50+25}" y="108" text-anchor="middle" font-size="11" fill="var(--mute)">${esc(m.l)}</text>`}).join("")}</svg>`;
- $("#app").innerHTML=`<h1>Trajets</h1>
+ let sv=null; try{sv=JSON.parse(localStorage.getItem("tk_save")||"null")}catch(e){}
+ const resume=sv&&sv.u===user.id&&!tk&&sv.pts&&sv.pts.length?`<div class="warnbox"><b>Sortie interrompue</b> : ${(sv.dist/1000).toFixed(1)} km enregistrés.<br><button id="r1">Reprendre</button><button class="sec" id="r2">La terminer ici</button><button class="sec" id="r3">Supprimer</button></div>`:"";
+ $("#app").innerHTML=`<h1>Trajets</h1>${resume}
  <div class="card"><h2>Suivre ma sortie (GPS)</h2><div id="tkp"></div></div>
  <div class="card"><h2>Générer un itinéraire</h2>
- <label class="chk"><input id="gc" type="checkbox" ${localStorage.getItem("geo_ok")==="1"?"checked":""}><span>J'accepte que ce que je tape dans les champs d'adresse soit envoyé à Photon (Komoot) pour les suggestions, et que les points du trajet soient envoyés à FOSSGIS pour calculer l'itinéraire. Voir la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>
+ <label class="chk"><input id="gc" type="checkbox" ${geoOK()?"checked":""}><span>J'accepte que ce que je tape dans les champs d'adresse soit envoyé à Photon (Komoot) pour les suggestions, que les points du trajet soient envoyés à FOSSGIS pour calculer l'itinéraire, et que mon navigateur charge les cartes depuis OpenStreetMap. Voir la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>
  <div class="acw"><label for="a">Départ</label><input id="a" autocomplete="off" placeholder="Tape une adresse puis choisis dans la liste"></div><button class="sec" id="my" type="button">Utiliser ma position</button>
  <div class="row"><div><label for="md">Type</label><select id="md"><option value="loop">Boucle depuis le départ</option><option value="ab">De A à B</option></select></div><div><label for="au">Autonomie réelle (km)</label><input id="au" type="number" min="3" value="${esc(localStorage.getItem("au")||20)}"></div></div>
  <div id="wl"><label for="dk">Distance voulue (km)</label><input id="dk" type="number" min="1" max="60" value="10"></div>
  <div id="wb" style="display:none" class="acw"><label for="b">Arrivée</label><input id="b" autocomplete="off" placeholder="Tape une adresse puis choisis dans la liste"></div>
- <button id="go">Générer</button><div id="res"></div><p class="mute">Données cartographiques © contributeurs OpenStreetMap.</p></div>
+ <button id="go">Générer</button><div id="res"></div></div>
  <div class="card"><h2>Ajouter une sortie à la main</h2><p class="mute">Compte dans le classement « déclaré ».</p>
  <div class="row"><div><label for="rd">Date</label><input id="rd" type="date" value="${today}"></div><div><label for="rk">Distance (km)</label><input id="rk" type="number" min="0" step="0.1"></div></div>
  <label for="rsc">Trottinette</label><select id="rsc"><option value="">Aucune</option>${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select>
  <label for="rt">Titre (facultatif)</label><input id="rt" maxlength="60">
  <label class="chk"><input id="ra" type="checkbox" checked><span>Ajouter ces km au compteur de la trottinette</span></label><button id="sr">Enregistrer</button></div>
  <div class="card"><h2>Km par mois</h2>${chart}</div>`+
- rides.slice(0,20).map(r=>{const s=scooters.find(x=>x.id===r.scooter_id), g=r.source==="gps"&&r.track;
-  return `<details><summary><b>${esc(r.title||"Sortie")}</b> <span class="tag ${r.source==="gps"?"fine":"neutral"}">${r.source==="gps"?"GPS":"Déclarée"}</span><br><span class="mute">${esc(r.ride_on)} · ${r.km} km${s?" · "+esc(s.nickname||s.model):""}</span></summary>
-  ${r.source==="gps"?`<p class="mute">Moyenne ${r.avg_kmh} km/h · maximum ${r.max_kmh} km/h · ${Math.round(r.duration_s/60)} min</p>`:""}${g?curve(r.track)+mapSvg(r.track.map(p=>[p[2],p[1]])):""}
+ rides.slice(0,20).map(r=>{const s=scooters.find(x=>x.id===r.scooter_id), g=r.source==="gps"&&r.track&&r.track.length>1;
+  return `<details data-ri="${r.id}"><summary><b>${esc(r.title||"Sortie")}</b> <span class="tag ${r.source==="gps"?"fine":"neutral"}">${r.source==="gps"?"GPS":"Déclarée"}</span><br><span class="mute">${esc(r.ride_on)}, ${r.km} km${s?", "+esc(s.nickname||s.model):""}</span></summary>
+  ${r.source==="gps"?`<p class="mute">Moyenne ${r.avg_kmh} km/h, maximum ${r.max_kmh} km/h, ${Math.round(r.duration_s/60)} min</p>`:""}${g?curve(r.track)+`<div class="mapslot"></div><button class="sec" data-rc="${r.id}">Carte à partager</button>`:""}
   <button class="sec" data-rx="${r.id}">Supprimer</button></details>`}).join("");
  tkRender(); ac("a"); ac("b");
+ if(resume){
+  $("#r1").onclick=()=>{if(!navigator.geolocation) return toast("Géolocalisation indisponible."); tk=restoreTk(sv); tkWatch(); tkRender(); $("#r1").closest(".warnbox").remove()};
+  $("#r2").onclick=()=>{tk=restoreTk(sv); tk.done=true; tk.end=sv.end||(sv.pts.length?sv.pts[sv.pts.length-1][0]:Date.now()); route()};
+  $("#r3").onclick=()=>{localStorage.removeItem("tk_save"); route()};
+ }
+ document.querySelectorAll("details[data-ri]").forEach(d=>d.addEventListener("toggle",()=>{if(d.open&&!d.dataset.m&&d.querySelector(".mapslot")){d.dataset.m=1; const r=rides.find(x=>x.id===d.dataset.ri); mapInto(d.querySelector(".mapslot"),r.track.map(p=>[p[2],p[1]]))}}));
+ document.querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>rideCard(rides.find(x=>x.id===b.dataset.rc)));
  $("#md").onchange=()=>{const ab=$("#md").value==="ab"; $("#wb").style.display=ab?"block":"none"; $("#wl").style.display=ab?"none":"block"};
  $("#my").onclick=()=>{if(!navigator.geolocation) return toast("Géolocalisation indisponible."); navigator.geolocation.getCurrentPosition(p=>{$("#a").value="Ma position"; $("#a").dataset.lat=p.coords.latitude; $("#a").dataset.lon=p.coords.longitude},()=>toast("Position indisponible ou refusée."),{enableHighAccuracy:true,timeout:15000})};
  $("#go").onclick=async()=>{
@@ -570,7 +738,7 @@ function vRides(){
    if(ab) r=await osrm([A,B]);
    else{const T=+$("#dk").value||10; let R=T/3.9; const th=Math.random()*360;
     for(let i=0;i<2;i++){r=await osrm([A,dest(A[0],A[1],R,th),dest(A[0],A[1],R,th+60),A]); const k=r.distance/1000; if(Math.abs(k-T)/T<.25)break; R*=T/k}}
-   rt=r; showRoute();
+   r.ab=ab; rt=r; showRoute();
   }catch(e){$("#res").innerHTML=`<p class="mute">${esc(DEMO&&/fetch|Failed|network/i.test(e.message)?"Cette fonction ne peut pas être testée dans l'aperçu : elle marchera sur le site déployé.":"Échec : "+e.message)}</p>`}
  };
  $("#sr").onclick=async()=>{const km=+$("#rk").value; if(!(km>0&&km<=300)) return toast("Saisis une distance entre 0 et 300 km.");
@@ -582,15 +750,35 @@ function vRides(){
 }
 function showRoute(){
  const c=rt.geometry.coordinates, km=rt.distance/1000, au=+$("#au").value||20, pct=Math.round(km/au*100);
- $("#res").innerHTML=`${mapSvg(c)}
- <p><b>${km.toFixed(1)} km</b> · environ ${Math.round(km/18*60)} min à 18 km/h · <span class="tag ${pct>80?"late":pct>60?"soon":"fine"}">≈ ${pct} % de batterie</span></p>
- <p class="mute">Itinéraire calculé pour le vélo : vérifie qu'il est autorisé aux trottinettes (ni trottoir, ni voie rapide, ni zone interdite) et respecte la limite de 25 km/h. L'estimation de batterie est indicative.</p>
- <button class="sec" id="rg">Autre proposition</button><button class="sec" id="gpx">Télécharger le GPX</button><button id="rs">Reporter la distance</button>`;
- $("#rg").onclick=()=>$("#go").click();
+ $("#res").innerHTML=`<div id="rmap"></div>
+ <p><b>${km.toFixed(1)} km</b>, environ ${Math.round(km/25*60)} min à 25 km/h au maximum <span class="tag ${pct>80?"late":pct>60?"soon":"fine"}">≈ ${pct} % de batterie</span></p>
+ <p class="mute">Itinéraire calculé pour le vélo : vérifie qu'il est autorisé aux trottinettes (ni trottoir, ni voie rapide, ni zone interdite) et respecte la limite de 25 km/h. Les estimations sont indicatives.</p>
+ <div class="btnrow"><button id="nvgo">Lancer la navigation</button>${rt.ab?"":`<button class="sec" id="rg">Autre proposition</button>`}</div>
+ <div class="btnrow"><button class="sec" id="shr">Partager le lien</button><a class="btn sec" target="_blank" rel="noopener" href="${gmaps(c)}">Google Maps</a>${rt.ab?`<a class="btn sec" target="_blank" rel="noopener" href="${amaps(c)}">Plans</a>`:""}</div>
+ <details style="margin-top:.8rem"><summary>Plus d'options</summary><button class="sec" id="gpx">Télécharger le fichier GPX</button><button class="sec" id="rs">Reporter la distance</button></details>`;
+ mapInto($("#rmap"),c);
+ $("#nvgo").onclick=()=>navWarn(()=>navRun(rt));
+ if($("#rg")) $("#rg").onclick=()=>$("#go").click();
  $("#rs").onclick=()=>{$("#rk").value=km.toFixed(1); $("#rk").scrollIntoView({block:"center"})};
+ $("#shr").onclick=async()=>{
+  const pts=c.filter((_,i)=>i%Math.ceil(c.length/250)===0||i===c.length-1), link=location.origin+location.pathname+"#/partage?p="+encodeURIComponent(penc(pts))+"&k="+km.toFixed(1);
+  try{if(navigator.share) await navigator.share({title:"Itinéraire L'Atelier Volt",text:km.toFixed(1)+" km",url:link}); else{await navigator.clipboard.writeText(link); toast("Lien copié.")}}
+  catch(e){if(e.name!=="AbortError"){try{await navigator.clipboard.writeText(link); toast("Lien copié.")}catch(_){toast("Copie impossible.")}}}
+ };
  $("#gpx").onclick=()=>{const g=`<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="L'Atelier Volt" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Itinéraire L'Atelier Volt</name><trkseg>${c.map(p=>`<trkpt lat="${p[1]}" lon="${p[0]}"/>`).join("")}</trkseg></trk></gpx>`;
   const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([g],{type:"application/gpx+xml"})); l.download="itineraire.gpx"; l.click()};
 }
+
+/* --- Itinéraire partagé (page publique) et désinscription --- */
+function vShare(){
+ const p=hashQ.get("p")||"", k=hashQ.get("k")||""; let c=[];
+ try{if(/^[\x3f-\x7e]{4,8000}$/.test(p)) c=pdec(p).filter(x=>Math.abs(x[0])<=180&&Math.abs(x[1])<=90)}catch(e){}
+ if(c.length<2){$("#app").innerHTML=`<div class="authc"><div class="card"><h1>Lien invalide</h1><p class="mute">Cet itinéraire est introuvable.</p><a class="btn" href="#/bienvenue">Découvrir L'Atelier Volt</a></div></div>`; return}
+ $("#app").innerHTML=`<h1>Itinéraire partagé</h1><div class="card"><div id="shm"></div><p><b>${esc(k)} km</b></p><p class="mute">Itinéraire calculé pour le vélo : vérifie qu'il est autorisé aux trottinettes et respecte le Code de la route.</p><a class="btn" target="_blank" rel="noopener" href="${gmaps(c)}">Ouvrir dans Google Maps</a></div>
+ <div class="card"><h3>Tu roules en trottinette électrique ?</h3><p class="mute">L'Atelier Volt est un carnet d'entretien gratuit : interventions, rappels, suivi GPS et itinéraires.</p><a class="btn sec" href="#/bienvenue">Découvrir</a></div>`;
+ mapInto($("#shm"),c);
+}
+const vUnsub = () => $("#app").innerHTML=`<div class="authc"><div class="card"><h1>Désinscription</h1><p>Tu ne recevras plus de rappels par email. Tu peux les réactiver à tout moment dans Compte.</p><a class="btn" href="#/connexion">Aller sur L'Atelier Volt</a></div></div>`;
 
 /* ====== Classement ====== */
 async function vRank(){
@@ -608,20 +796,93 @@ async function vRank(){
  draw();
 }
 
-/* ====== Plus ====== */
+/* ====== Plus, batterie, badges, fiche de revente, PDF ====== */
 function vPlus(){
- $("#app").innerHTML=`<h1>Plus</h1>`+[["trottinettes","Mes trottinettes","Modèle, kilométrage, assurance"],["rappels","Rappels d'entretien","Ce qui est à faire"],["guides","Guides","Fiches pratiques"],["compte","Compte","Pseudo, données, clé d'accès, suppression"]].map(([h,t,d])=>`<a href="#/${h}" style="text-decoration:none;color:inherit"><div class="card"><h3>${t}</h3><div class="mute">${d}</div></div></a>`).join("");
+ $("#app").innerHTML=`<h1>Plus</h1>`+[["trottinettes","Mes trottinettes","Modèle, kilométrage, assurance, carnet PDF"],["rappels","Rappels d'entretien","Ce qui est à faire, avec ajout au calendrier"],["batterie","Batterie","Suivi de ton autonomie"],["badges","Badges","Tes réussites"],["guides","Guides","Fiches pratiques"],["compte","Compte","Pseudo, rappels par email, passkey, données"]].map(([h,t,d])=>`<a href="#/${h}" style="text-decoration:none;color:inherit"><div class="card"><h3>${t}</h3><div class="mute">${d}</div></div></a>`).join("");
+}
+const batEst = b => b.km*100/(b.pct_start-b.pct_end);
+function vBattery(){
+ if(!scooters.length){$("#app").innerHTML=`<h1>Batterie</h1><p>Ajoute d'abord une <a href="#/trottinettes">trottinette</a>.</p>`;return}
+ const today=new Date().toISOString().slice(0,10);
+ let h=`<h1>Batterie</h1><p class="mute">Après une sortie, note la distance et le niveau de batterie au départ et à l'arrivée. L'appli estime ton autonomie réelle et repère une baisse. Le vent, le relief, ton poids et la température la font varier : regarde la tendance, pas une mesure isolée.</p>
+ <div class="card"><h2>Ajouter une mesure</h2><label for="bs">Trottinette</label><select id="bs">${scooters.map(s=>`<option value="${s.id}">${esc(s.nickname||s.model)}</option>`).join("")}</select>
+ <div class="row"><div><label for="bd">Date</label><input id="bd" type="date" value="${today}"></div><div><label for="bk">Distance (km)</label><input id="bk" type="number" min="1" step="0.1"></div></div>
+ <div class="row"><div><label for="b1">Batterie au départ (%)</label><input id="b1" type="number" min="1" max="100"></div><div><label for="b2">Batterie à l'arrivée (%)</label><input id="b2" type="number" min="0" max="99"></div></div>
+ <button id="bsv">Enregistrer</button></div>`;
+ scooters.forEach(s=>{const e=bat.filter(b=>b.scooter_id===s.id).sort((a,b)=>String(a.logged_on).localeCompare(String(b.logged_on)));
+  if(!e.length) return;
+  const v=e.map(batEst), last=v[v.length-1], prev=v.slice(0,-1), avg=prev.length?prev.reduce((a,b)=>a+b,0)/prev.length:null, mx=Math.max(...v)*1.1;
+  const pts=v.map((x,i)=>`${(20+(v.length>1?i/(v.length-1):.5)*260).toFixed(1)},${(95-x/mx*80).toFixed(1)}`);
+  const drop=avg&&prev.length>=2&&last<avg*.8;
+  h+=`<div class="card"><h3>${esc(s.nickname||s.model)}</h3><p><b>${last.toFixed(1)} km</b> d'autonomie estimée (dernière mesure)${avg?`, moyenne précédente ${avg.toFixed(1)} km`:""}</p>
+  ${drop?`<div class="warnbox" style="margin:0 0 .6rem">Autonomie en baisse d'environ ${Math.round((1-last/avg)*100)} % : refais une mesure dans des conditions comparables et, si ça persiste, fais contrôler la batterie.</div>`:""}
+  <svg viewBox="0 0 300 110" style="width:100%"><polyline fill="none" stroke="var(--acc)" stroke-width="2.5" points="${pts.join(" ")}"/>${pts.map(p=>`<circle cx="${p.split(",")[0]}" cy="${p.split(",")[1]}" r="4" fill="var(--acc)"/>`).join("")}</svg>
+  ${e.slice(-6).reverse().map(b=>`<div class="mute" style="display:flex;justify-content:space-between;gap:.5rem"><span>${esc(b.logged_on)}, ${b.km} km, ${b.pct_start} à ${b.pct_end} %</span><a href="#" data-bx="${b.id}">Supprimer</a></div>`).join("")}</div>`});
+ $("#app").innerHTML=h;
+ $("#bsv").onclick=async()=>{const km=+$("#bk").value, p1=+$("#b1").value, p2=+$("#b2").value;
+  if(!(km>0)||!(p1>p2)||p1-p2<10) return toast("Saisis une distance et une baisse d'au moins 10 % de batterie.");
+  const {error}=await sb.from("battery_logs").insert({user_id:user.id,scooter_id:$("#bs").value,logged_on:$("#bd").value,km,pct_start:p1,pct_end:p2}); error?toast("Erreur : "+error.message):route()};
+ document.querySelectorAll("[data-bx]").forEach(a=>a.onclick=async e=>{e.preventDefault(); await sb.from("battery_logs").delete().eq("id",a.dataset.bx); route()});
+}
+function badgeList(){
+ const km=scooters.reduce((a,s)=>a+s.km,0), longest=Math.max(0,...rides.map(r=>+r.km)), gps=rides.filter(r=>r.source==="gps").length;
+ const ok=scooters.length>0&&logs.length>0&&scooters.every(s=>calc(s).every(x=>x.r<1));
+ return [["Première sortie",rides.length>=1,"Enregistre ta première sortie"],["100 km",km>=100,"Atteins 100 km au compteur"],["500 km",km>=500,"Atteins 500 km"],["1 000 km",km>=1000,"Atteins 1 000 km"],["Sortie de 20 km",longest>=20,"Fais une sortie de 20 km"],["5 sorties GPS",gps>=5,"Suis 5 sorties au GPS"],["Premier entretien",logs.length>=1,"Note ta première intervention"],["10 interventions",logs.length>=10,"Note 10 interventions"],["Entretien à jour",ok,"Aucun rappel en retard"],["Assurance à jour",scooters.length>0&&scooters.every(s=>ins(s)[0]==="fine"),"Renseigne une assurance valide"],["Batterie suivie",bat.length>=3,"Note 3 mesures de batterie"]];
+}
+const badgeCard = () => {const b=badgeList(), n=b.filter(x=>x[1]).length; return `<a href="#/badges" style="text-decoration:none;color:inherit"><div class="card"><h3>Badges</h3><div class="mute">${n} sur ${b.length} obtenus</div></div></a>`};
+function vBadges(){
+ const T='<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>';
+ $("#app").innerHTML=`<h1>Badges</h1><div class="badges">${badgeList().map(([n,on,d])=>`<div class="badge ${on?"":"off"}"><div class="ico"><svg viewBox="0 0 24 24">${T}</svg></div><b>${esc(n)}</b><span class="mute">${esc(d)}</span></div>`).join("")}</div>`;
+}
+function fiche(s){
+ const l=logs.filter(x=>x.scooter_id===s.id), eur=l.reduce((a,x)=>a+(+x.cost||0),0);
+ const lines=l.slice(0,5).map(x=>{const t=TASKS.find(y=>y.id===x.task); return "- "+(t?t.n:"Autre intervention")+", le "+new Date(x.done_on).toLocaleDateString("fr-FR")+" ("+x.km+" km)"}).join("\n");
+ const txt=`Trottinette électrique ${s.model}, ${s.km} km au compteur.\n\nEntretien suivi avec un carnet : ${l.length} intervention${l.length>1?"s":""} notée${l.length>1?"s":""}${eur?", pour "+Math.round(eur)+" EUR de dépenses documentées":""}.${lines?"\n\nDernières interventions :\n"+lines:""}\n\nCarnet d'entretien (PDF) disponible sur demande.`;
+ const m=sheet("fsm",`<h2>Fiche de revente</h2><p class="mute">Texte à copier dans ton annonce. Vérifie et complète-le (état, accessoires, prix).</p><textarea id="ftx" rows="11" style="margin-top:.6rem">${esc(txt)}</textarea><div class="btnrow"><button id="fcp">Copier</button><button class="sec" id="fcl">Fermer</button></div>`);
+ $("#fcl").onclick=()=>m.remove(); $("#fcp").onclick=async()=>{try{await navigator.clipboard.writeText($("#ftx").value); toast("Texte copié.")}catch(e){$("#ftx").select(); toast("Sélectionné : copie-le à la main.")}};
+}
+function carnetPdf(s){
+ if(!window.jspdf) return toast("Génération du PDF indisponible.");
+ const d=new window.jspdf.jsPDF({unit:"mm",format:"a4"}); let y=22;
+ const T=(t,x,sz,b)=>{d.setFontSize(sz||11); d.setFont("helvetica",b?"bold":"normal"); d.text(String(t),x,y)};
+ const l=logs.filter(x=>x.scooter_id===s.id).sort((a,b)=>String(a.done_on).localeCompare(String(b.done_on)));
+ const eur=l.reduce((a,x)=>a+(+x.cost||0),0), fr=x=>new Date(x).toLocaleDateString("fr-FR");
+ T("Carnet d'entretien",15,22,true); y+=9; T(s.nickname?s.nickname+" ("+s.model+")":s.model,15,13); y+=7;
+ T("Kilometrage : "+s.km+" km",15); y+=6; if(s.serial){T("Numero de serie : "+s.serial,15); y+=6}
+ T("Interventions notees : "+l.length+"   Depenses : "+eur.toFixed(2)+" EUR",15); y+=6; T("Etabli le "+fr(Date.now()),15); y+=12;
+ T("Date",15,10,true); T("Km",40,10,true); T("Intervention",58,10,true); T("Cout",160,10,true); y+=2; d.line(15,y,195,y); y+=6;
+ l.forEach(x=>{const t=TASKS.find(z=>z.id===x.task), note=d.splitTextToSize((t?t.n:"Autre intervention")+(x.note?" - "+x.note:""),98);
+  if(y+note.length*5>278){d.addPage(); y=20}
+  T(fr(x.done_on),15,10); T(x.km,40,10); d.setFontSize(10); d.text(note,58,y); T(x.cost!=null?(+x.cost).toFixed(2)+" EUR":"",160,10); y+=note.length*5+2});
+ if(!l.length){T("Aucune intervention notee.",15,10)}
+ const n=d.getNumberOfPages(); for(let i=1;i<=n;i++){d.setPage(i); d.setFontSize(8); d.setFont("helvetica","normal"); d.text("Document etabli a partir des informations declarees par le proprietaire via L'Atelier Volt. Il ne constitue pas un certificat.",15,290)}
+ d.save("carnet-"+(s.nickname||s.model).replace(/[^A-Za-z0-9]+/g,"-").slice(0,40)+".pdf");
+}
+
+/* ====== Installation sur l'écran d'accueil ====== */
+let deferredInstall=null; addEventListener("beforeinstallprompt",e=>{e.preventDefault(); deferredInstall=e});
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+const whenFree = f => {const t=setInterval(()=>{if(!document.querySelector(".modal,#splash")){clearInterval(t); f()}},800)};
+function askInstall(){
+ if(document.getElementById("inm")||isStandalone()) return;
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent), and=/android/i.test(navigator.userAgent); if(!ios&&!and) return;
+ const m=sheet("inm",`<div class="ico big"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div><h2>Ajoute L'Atelier Volt à ton écran d'accueil</h2><p>Tu l'ouvres comme une appli, en plein écran, ce qui est aussi plus confortable pour le suivi GPS.</p>${ios?`<ol><li>Touche le bouton <b>Partager</b> (le carré avec une flèche) de ton navigateur.</li><li>Choisis <b>Sur l'écran d'accueil</b>.</li></ol>`:(deferredInstall?"":`<p>Ouvre le menu de ton navigateur, puis choisis <b>Installer l'application</b> ou <b>Ajouter à l'écran d'accueil</b>.</p>`)}<label class="chk"><input type="checkbox" id="inX"><span>Ne plus me le proposer</span></label><div class="btnrow">${deferredInstall?`<button id="inY">Installer</button>`:""}<button class="sec" id="inN">Fermer</button></div>`);
+ const close=()=>{if($("#inX")&&$("#inX").checked) localStorage.setItem("inst_never","1"); m.remove()};
+ $("#inN").onclick=close; m.addEventListener("click",e=>{if(e.target===m) close()});
+ if($("#inY")) $("#inY").onclick=async()=>{deferredInstall.prompt(); await deferredInstall.userChoice.catch(()=>{}); deferredInstall=null; close()};
 }
 
 /* ====== Compte (RGPD : export + suppression) ====== */
 function vAccount(){
  $("#app").innerHTML=`<h1>Compte</h1><div class="card"><p>Connecté : <b>${esc(user.email)}</b></p>
  <label for="un">Pseudo (3 à 20 caractères : lettres, chiffres, _)</label><input id="un" maxlength="20" autocomplete="nickname" value="${esc((profile||{}).username||"")}"><button id="su">Enregistrer le pseudo</button></div>
+ <div class="card"><label class="chk"><input id="er" type="checkbox" ${(profile||{}).email_reminders?"checked":""}><span>Recevoir mes rappels d'entretien par email : 1 par semaine au maximum, seulement s'il y a quelque chose à faire. Je peux me désinscrire à tout moment.</span></label></div>
  <div class="card"><button id="pk">Ajouter une clé d'accès</button><button class="sec" id="ex">Télécharger mes données</button><button class="danger" id="del">Supprimer mon compte</button>
  <p class="mute">Une clé d'accès (empreinte, visage ou code de ton appareil) te permet de te connecter sans mot de passe. La suppression efface définitivement ton compte et toutes tes données.</p></div>`;
  $("#su").onclick=async()=>{const u=$("#un").value.trim(); if(!/^[A-Za-z0-9_]{3,20}$/.test(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
   const {error}=await sb.from("profiles").upsert({id:user.id,username:u,public_ranking:!!(profile&&profile.public_ranking)});
   toast(error?(error.code==="23505"?"Ce pseudo est déjà pris.":"Erreur : "+error.message):"Pseudo enregistré."); if(!error) route()};
+ $("#er").onchange=async()=>{if(!profile||!profile.username) return; const {error}=await sb.from("profiles").upsert({id:user.id,username:profile.username,public_ranking:!!profile.public_ranking,email_reminders:$("#er").checked}); if(error){toast("Erreur : "+error.message); $("#er").checked=!$("#er").checked}else{profile.email_reminders=$("#er").checked; toast($("#er").checked?"Rappels par email activés.":"Rappels par email désactivés.")}};
  $("#pk").onclick=async()=>{if(!sb.auth.registerPasskey) return toast("Clés d'accès indisponibles."); const {error}=await sb.auth.registerPasskey(); toast(error?"Clé d'accès : "+error.message:"Clé d'accès ajoutée.")};
  $("#ex").onclick=()=>{const b=new Blob([JSON.stringify({email:user.email,profil:profile,scooters,logs,rides},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="mes-donnees.json";a.click()};
  $("#del").onclick=async()=>{if(!confirm("Supprimer définitivement ton compte ?"))return; const {error}=await sb.rpc("delete_my_account"); if(error) return toast("Erreur : "+error.message); await sb.auth.signOut(); toast("Compte supprimé.")};
@@ -633,7 +894,7 @@ const L = t => `<div class="card legal"><p><a href="#" onclick="history.back();r
 const E = () => `${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}`;
 const vMentions = () => $("#app").innerHTML = L(`<h1>Mentions légales</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
 <h3>1. Éditeur du site</h3><p>${N} est édité à titre non professionnel par ${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}. Conformément à l'article 6, III, 2° de la loi n° 2004-575 du 21 juin 2004 (LCEN), l'éditeur a communiqué son identité complète à l'hébergeur ; l'adresse postale indiquée est celle de l'hébergeur : ${esc(EDITEUR.adresse)}. Directeur de la publication : ${esc(EDITEUR.nom)}. Le site est un projet gratuit et non commercial.</p>
-<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : West EU (Irlande), dans l'Union européenne.</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL).</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
+<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : West EU (Irlande), dans l'Union européenne.</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL). Les fonds de carte sont chargés depuis les serveurs de l'OpenStreetMap Foundation (Royaume-Uni).</li><li><b>Envoi d'emails</b> (messages du compte et rappels) : MailerSend, société du groupe MailerLite, Union européenne.</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
 <h3>3. Contact</h3><p>Par email : ${esc(EDITEUR.email)}. Nous répondons en français, en principe sous 7 jours ouvrés.</p>
 <h3>4. Signalement de contenus illicites</h3><p>Tu peux signaler un contenu que tu estimes illicite en écrivant à l'adresse ci-dessus, en indiquant : la page concernée, une description du contenu, les raisons pour lesquelles il est illicite, ton nom et ton adresse email. Ce point de contact unique est aussi destiné aux autorités des États membres (règlement (UE) 2022/2065, dit « DSA »). Les contenus saisis par les utilisateurs sont privés et visibles uniquement de leur auteur, sauf le pseudo et les totaux de ceux qui ont choisi d'apparaître aux classements.</p>
 <h3>5. Propriété intellectuelle</h3><p>Le code, la structure, les textes, le logo et la charte graphique de ${N} sont protégés par le droit d'auteur. Toute reproduction ou réutilisation sans autorisation écrite est interdite. Les noms de marques et de modèles cités appartiennent à leurs titulaires, ne sont employés que pour identifier les produits, et n'impliquent aucun partenariat ni affiliation.</p>
@@ -653,6 +914,8 @@ const vCgu = () => $("#app").innerHTML = L(`<h1>Conditions générales d'utilisa
 <h3>8 bis. Pseudo et classements</h3><p>Le pseudo est demandé à la création du compte. Il doit être choisi librement mais ne doit pas usurper l'identité d'un tiers, être injurieux, discriminatoire ou illicite, ni révéler de donnée personnelle. L'Éditeur peut modifier ou retirer un pseudo contraire à ces règles. Le pseudo n'est visible des autres utilisateurs que si tu choisis d'apparaître aux classements. Deux classements existent : « tracé GPS » (sorties enregistrées avec le suivi GPS) et « déclaré » (km saisis à la main, non vérifiés). Le classement « tracé GPS » n'est pas une certification : il repose sur des données de ton appareil, que l'Éditeur ne contrôle que de façon automatique et limitée. Il n'est associé à aucun gain. Toute tentative de fausser un classement (position simulée, trajet dans un autre véhicule, données inventées) peut entraîner la suppression de tes sorties ou de ton compte.</p>
 <h3>8 ter. Suivi GPS</h3><p>Le suivi GPS est facultatif et ne démarre que sur ton action. Il utilise la géolocalisation de ton appareil, que tu peux refuser ou couper à tout moment, et ne fonctionne que tant que la page reste ouverte au premier plan. Ne manipule pas ton téléphone en roulant : démarre et arrête le suivi à l'arrêt. L'Éditeur ne garantit pas la précision des mesures (distance, vitesse), qui sont indicatives et ne constituent pas un instrument de mesure légal.</p>
 <h3>8 quater. Itinéraires</h3><p>Les itinéraires proposés sont générés automatiquement à partir de données OpenStreetMap et d'un calcul prévu pour le vélo. Ils peuvent comporter des erreurs, passer par des voies interdites ou dangereuses pour une trottinette, ou être indisponibles. Tu restes seul responsable du trajet que tu empruntes, de ta vigilance et du respect du Code de la route. L'estimation de consommation de batterie est indicative.</p>
+<h3>8 quinquies. Navigation, calendrier et rappels</h3><p>La navigation est une aide : elle ne remplace ni ta vigilance, ni la signalisation, ni le Code de la route. Fixe ton téléphone avec un support et ne le manipule jamais en roulant. Les instructions et les itinéraires peuvent être inexacts ou inadaptés aux trottinettes. L'écran doit rester allumé et la page ouverte au premier plan ; le suivi peut s'interrompre sans que l'Éditeur puisse le garantir. Les événements de calendrier sont ajoutés une seule fois et ne se mettent pas à jour ; les rappels par email sont facultatifs et peuvent comporter des retards ou des erreurs.</p>
+<h3>8 sexies. Carnet PDF et fiche de revente</h3><p>Le carnet en PDF et la fiche de revente sont établis à partir des informations que tu as saisies. Ils ne constituent ni un certificat ni une garantie de l'état de la trottinette. Tu es seul responsable de l'exactitude des annonces que tu publies.</p>
 <h3>9. Informations indicatives et sécurité</h3><p>Les intervalles d'entretien, tâches, guides, rappels, listes de modèles et suivi de l'assurance sont fournis <b>à titre indicatif</b> ; ils peuvent contenir des erreurs ou être incomplets, et ne remplacent ni le manuel du constructeur, ni l'avis d'un professionnel, ni tes obligations légales. L'entretien des freins, de la batterie, des fixations et des pneus touche à ta sécurité : en cas de doute, adresse-toi à un réparateur qualifié. Tu es seul responsable de l'état de ta trottinette, de la souscription d'une assurance de responsabilité civile et du respect du Code de la route et de la réglementation applicable aux engins de déplacement personnel motorisés.</p>
 <h3>10. Responsabilité</h3><p>L'Éditeur est tenu à une obligation de moyens. Il n'est pas responsable des dommages résultant d'une interprétation des informations du service, d'une intervention ou d'une absence d'intervention sur ta trottinette, d'une perte de données, d'une interruption du service ou d'un événement indépendant de sa volonté (force majeure, panne des prestataires, attaque informatique malgré les mesures de sécurité raisonnables), sauf faute lourde ou dolosive. Rien dans ces CGU n'exclut ni ne limite une responsabilité qui ne peut l'être en droit, notamment en cas de dommage corporel, ou les droits dont tu disposes en tant que consommateur.</p>
 <h3>11. Disponibilité et évolution du service</h3><p>Le service est fourni « en l'état », sans garantie de disponibilité continue. Des interruptions peuvent avoir lieu pour maintenance. L'Éditeur peut faire évoluer, suspendre ou arrêter le service ; en cas d'arrêt définitif, il t'en informe au moins 30 jours à l'avance et te permet d'exporter tes données.</p>
@@ -672,11 +935,16 @@ const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</
 <li><b>Sorties</b> : date, distance, titre, trottinette associée, source (déclarée ou tracée GPS). Pour une sortie tracée : durée, vitesses moyenne et maximale et tracé (points de passage, dont tu peux masquer les 150 premiers et derniers mètres). Finalité : statistiques personnelles, graphiques, mise à jour du compteur et, avec ton accord, classements. Base légale : exécution du contrat. Durée : jusqu'à suppression par toi ou du compte. Ces données restent privées, sauf les totaux affichés aux classements si tu y participes.</li>
 <li><b>Suivi GPS</b> (facultatif) : ta position est lue par ton navigateur uniquement pendant un suivi que tu lances et arrêtes toi-même, et traitée sur ton appareil jusqu'à l'enregistrement de la sortie. Base légale : ton consentement (autorisation de localisation de ton appareil, puis action de démarrage), que tu peux retirer à tout moment en refusant ou en coupant la géolocalisation.</li>
 <li><b>Itinéraires</b> (facultatif) : ce que tu tapes dans les champs d'adresse est envoyé à Photon (Komoot) pour les suggestions, et les points du trajet à FOSSGIS pour le calcul ; ils reçoivent aussi ton adresse IP. Nous ne les conservons pas. Base légale : ton consentement, demandé par une case à cocher avant la première utilisation.</li>
+<li><b>Cartes et navigation</b> (facultatif) : lorsqu'une carte s'affiche, ton navigateur la charge depuis les serveurs d'OpenStreetMap, qui reçoivent ton adresse IP et la zone affichée, après ton accord (case à cocher ou bouton « Afficher la carte »). Pendant une navigation, ta position est lue localement par ton navigateur pour te guider ; l'itinéraire est recalculé via FOSSGIS si tu t'écartes du trajet.</li>
+<li><b>Partage d'itinéraire par lien</b> (facultatif) : le tracé est contenu dans l'adresse du lien. Nous ne le stockons pas, mais toute personne qui possède le lien peut le voir : ne le partage qu'avec des personnes de confiance et évite les trajets qui révèlent ton domicile.</li>
+<li><b>Batterie</b> : date, distance et niveaux de batterie que tu saisis. Finalité : estimer ton autonomie. Base légale : exécution du contrat. Durée : jusqu'à suppression par toi ou du compte.</li>
+<li><b>Rappels par email</b> (facultatif) : ton adresse email et l'état de tes rappels (entretiens en retard, assurance), au maximum une fois par semaine, via MailerSend. Base légale : ton consentement (case à cocher dans Compte), que tu peux retirer à tout moment en la décochant ou via le lien de désinscription présent dans chaque email.</li>
+<li><b>Calendrier</b> (facultatif) : le fichier d'événement est créé sur ton appareil ; en choisissant Google Agenda, les informations de l'événement sont transmises à Google uniquement à ce moment-là.</li>
 <li><b>Autres modes de connexion</b> (facultatifs) : avec Google, nous recevons ton email et un identifiant ; avec une clé d'accès, seule une clé publique est stockée par Supabase, ni ta biométrie ni ta clé privée ne quittent ton appareil. Base légale : exécution du contrat.</li>
 <li><b>Emails de service</b> (confirmation d'inscription, réinitialisation de mot de passe, information sur les CGU) : strictement transactionnels, jamais de prospection. Base légale : exécution du contrat et obligation d'information.</li>
 <li><b>Demandes de contact</b> : ton message et ton email, pour y répondre. Base légale : intérêt légitime. Durée : 12 mois après le dernier échange.</li></ul>
 <p>Les données du compte et du carnet sont nécessaires pour utiliser le service : sans elles, il ne peut pas fonctionner. Aucune donnée n'est vendue, louée ni utilisée pour de la publicité ou du profilage. Aucune décision automatisée produisant des effets juridiques n'est prise. Le service ne lit ta position que pendant un suivi GPS ou une demande « Utiliser ma position » que tu lances, et ne collecte ni données de santé ni photos. Les données de localisation étant sensibles, nous te conseillons de masquer le début et la fin de tes tracés.</p>
-<h3>3. Destinataires et sous-traitants</h3><ul><li><b>Supabase Inc.</b> : authentification, base de données, envoi d'emails de service.</li><li><b>Vercel Inc.</b> : hébergement et diffusion du site.</li><li><b>jsDelivr</b> : diffusion d'une bibliothèque logicielle, ce qui implique que ton adresse IP leur soit transmise lors du chargement de la page.</li><li><b>Komoot (Photon) et FOSSGIS e.V.</b> : uniquement si tu utilises les itinéraires. <b>Google</b> : uniquement si tu choisis de te connecter avec Google.</li></ul><p>Ils agissent dans le cadre de contrats de sous-traitance. Tes données ne sont accessibles qu'à l'Éditeur et à ces prestataires. Elles peuvent être communiquées aux autorités sur réquisition légale.</p>
+<h3>3. Destinataires et sous-traitants</h3><ul><li><b>Supabase Inc.</b> : authentification, base de données, envoi d'emails de service.</li><li><b>Vercel Inc.</b> : hébergement et diffusion du site.</li><li><b>jsDelivr</b> : diffusion d'une bibliothèque logicielle, ce qui implique que ton adresse IP leur soit transmise lors du chargement de la page.</li><li><b>Komoot (Photon), FOSSGIS e.V. et OpenStreetMap Foundation</b> : uniquement si tu utilises les itinéraires, la navigation ou les cartes. <b>Google</b> : uniquement si tu choisis de te connecter avec Google ou d'ajouter un événement à Google Agenda. <b>MailerSend</b> : envoi des emails du compte et, si tu les as activés, des rappels.</li></ul><p>Ils agissent dans le cadre de contrats de sous-traitance. Tes données ne sont accessibles qu'à l'Éditeur et à ces prestataires. Elles peuvent être communiquées aux autorités sur réquisition légale.</p>
 <h3>4. Transferts hors de l'Union européenne</h3><p>Certains prestataires peuvent traiter des données hors de l'Union européenne, notamment aux États-Unis. Ces transferts reposent sur une décision d'adéquation de la Commission européenne (cadre de protection des données UE–États-Unis) ou sur les clauses contractuelles types, complétées de mesures de sécurité. Tu peux obtenir une copie des garanties applicables en écrivant à l'Éditeur.</p>
 <h3>5. Sécurité</h3><p>Connexion chiffrée (HTTPS), mots de passe hachés, et cloisonnement des données au niveau de la base : chaque compte ne peut lire et modifier que ses propres données. En cas de violation de données présentant un risque, l'Éditeur la notifie à la CNIL dans les 72 heures et t'en informe sans délai si le risque est élevé.</p>
 <h3>6. Tes droits</h3><p>Tu disposes des droits : d'accès, de rectification, d'effacement, de limitation, d'opposition (pour les traitements fondés sur l'intérêt légitime), de portabilité, de retrait de ton consentement le cas échéant, et de définir des directives sur le sort de tes données après ton décès.</p>
@@ -686,7 +954,7 @@ const vPriv = () => $("#app").innerHTML = L(`<h1>Politique de confidentialité</
 <h3>8. Cookies et traceurs</h3><p>Voir la <a href="#/cookies">politique relative aux cookies</a>.</p>
 <h3>9. Modifications</h3><p>Cette politique peut évoluer. Toute modification importante est signalée aux utilisateurs inscrits. La date de dernière mise à jour figure en haut de la page.</p>`);
 const vCookies = () => $("#app").innerHTML = L(`<h1>Cookies et stockage local</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
-<h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
+<h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Sauvegarde du suivi GPS</b> : la sortie en cours est enregistrée toutes les 10 secondes sur ton appareil pour pouvoir la reprendre si la page se ferme. Elle est effacée quand tu l'enregistres ou la supprimes.</li><li><b>Choix d'affichage</b> : mémorise que tu ne veux plus voir certaines fenêtres (passkey, installation).</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
 <h3>Ce que le site n'utilise pas</h3><p>Aucun cookie publicitaire, aucun outil de mesure d'audience, aucun bouton ou contenu de réseau social, aucune police ni vidéo chargée depuis un service tiers de suivi.</p>
 <h3>Consentement</h3><p>Ces éléments sont strictement nécessaires au service que tu demandes : ils sont exemptés de consentement (article 82 de la loi Informatique et Libertés). Si un traceur non essentiel était ajouté un jour, ton consentement te serait demandé <i>avant</i> tout dépôt, et tu pourrais le refuser aussi simplement que l'accepter.</p>
 <h3>Gérer ton navigateur</h3><p>Tu peux effacer le stockage local à tout moment dans les réglages de ton navigateur. Tu seras alors déconnecté.</p>`);
