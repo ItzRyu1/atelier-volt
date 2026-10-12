@@ -165,13 +165,20 @@ nav a.on svg{animation:bounce .45s}
 .nv-dist{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1}.nv-txt{font-size:1.05rem;opacity:.95}
 #nvmap{flex:1;min-height:0;isolation:isolate;position:relative;z-index:0}
 .nv-bot{display:flex;gap:1.2rem;align-items:center;justify-content:space-between;padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom,0px));background:var(--card)}.nv-bot b{font-size:1.5rem}
+.streak{display:flex;gap:1rem;align-items:center}
+.stk{position:relative;height:130px;display:grid;place-items:center}
+.stk-b{width:84px;height:84px;border-radius:50%;background:var(--soft);display:grid;place-items:center;animation:boltIn .8s cubic-bezier(.2,.9,.3,1.3) both}
+.stk-b svg{width:46px;height:46px;fill:#ffd400;stroke:var(--acc);stroke-width:1.5;stroke-linejoin:round}
+.stk i{position:absolute;top:calc(50% - 5px);left:calc(50% - 5px);width:10px;height:10px;border-radius:50%;background:var(--acc);animation:burst 1s .35s ease-out both}.stk i:nth-child(even){background:#2de0b0}
+@keyframes boltIn{from{transform:scale(.1) rotate(-25deg);opacity:0}}
+@keyframes burst{from{transform:rotate(var(--a)) translateY(0);opacity:1}to{transform:rotate(var(--a)) translateY(-64px);opacity:0}}
 </style>
 </head>
 <body>
 <header><a class="brand" href="#/" style="color:inherit;text-decoration:none"><svg width="36" height="36" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#0b1a33" stroke="#2a5bff" stroke-width="1.5"/><circle cx="24" cy="24" r="14" fill="none" stroke="#2a5bff" stroke-width="4"/><path d="M26 8 14 26h8l-2 14 14-20h-8z" fill="#ffd400"/></svg>L'Atelier Volt</a><span id="who"></span></header>
 <div id="cookie">Ce site n'utilise que le stockage strictement nécessaire à ta connexion : aucun traceur, aucune publicité, aucune mesure d'audience. <a href="#/confidentialite">En savoir plus</a>. <button onclick="localStorage.setItem('ck','1');this.parentNode.style.display='none'">OK</button></div>
 <main id="app"></main>
-<footer><a href="#/mentions">Mentions légales</a><a href="#/cgu">CGU</a><a href="#/confidentialite">Confidentialité</a><a href="#/cookies">Cookies</a><a href="#" id="ct">Contact et signalement</a></footer>
+<footer><a href="#/mentions">Mentions légales</a><a href="#/cgu">CGU</a><a href="#/confidentialite">Confidentialité</a><a href="#/cookies">Cookies</a><a href="#/licences">Licences et crédits</a><a href="#" id="ct">Contact et signalement</a><div style="margin-top:.6rem">© 2026 L'Atelier Volt. Tous droits réservés.</div></footer>
 <nav id="nav"></nav>
 <div id="msg" role="status"></div>
 
@@ -201,13 +208,13 @@ function mockSb(){
   delete(){return {eq(c,x){p(t,g(t).filter(r=>r[c]!=x));if(t=="scooters")p("logs",g("logs").filter(r=>r.scooter_id!=x));return ok()}}}});
  const auth={signInWithPassword(){localStorage.setItem("demo_on","1");cb("SIGNED_IN",{user:U()});return ok()},
   signUp(a){localStorage.setItem("demo_meta",JSON.stringify(((a||{}).options||{}).data||{}));return auth.signInWithPassword()},signOut(){localStorage.removeItem("demo_on");cb("SIGNED_OUT",null);return ok()},
-  resetPasswordForEmail:ok,updateUser(d){const m=JSON.parse(localStorage.getItem("demo_meta")||"{}");localStorage.setItem("demo_meta",JSON.stringify({...m,...((d||{}).data||{})}));return Promise.resolve({data:{user:U()}})},signInWithOtp:ok,registerPasskey(){localStorage.setItem("demo_pk","1");return ok()},passkey:{list:()=>Promise.resolve({data:localStorage.getItem("demo_pk")?[{id:1}]:[]})},signInWithPasskey(){return auth.signInWithPassword()},signInWithOAuth(){return auth.signInWithPassword()},onAuthStateChange(f){cb=f;setTimeout(()=>f("INITIAL_SESSION",localStorage.getItem("demo_on")?{user:U()}:null))}};
+  resetPasswordForEmail:ok,updateUser(d){const m=JSON.parse(localStorage.getItem("demo_meta")||"{}");localStorage.setItem("demo_meta",JSON.stringify({...m,...((d||{}).data||{})}));return Promise.resolve({data:{user:U()}})},signInWithOtp:ok,registerPasskey(){localStorage.setItem("demo_pk","1");return ok()},passkey:{list:()=>Promise.resolve({data:localStorage.getItem("demo_pk")?[{id:1}]:[]})},verifyOtp(){return auth.signInWithPassword()},mfa:{getAuthenticatorAssuranceLevel:()=>Promise.resolve({data:{currentLevel:"aal1",nextLevel:"aal1"}}),listFactors:()=>Promise.resolve({data:{totp:[]}}),enroll:()=>Promise.resolve({error:{message:"Indisponible en démo"}}),challengeAndVerify:()=>Promise.resolve({error:{message:"Indisponible en démo"}}),unenroll:()=>Promise.resolve({})},signInWithPasskey(){return auth.signInWithPassword()},signInWithOAuth(){return auth.signInWithPassword()},onAuthStateChange(f){cb=f;setTimeout(()=>f("INITIAL_SESSION",localStorage.getItem("demo_on")?{user:U()}:null))}};
  return {from:tb,auth,rpc(n,a){ if(n==="username_available") return Promise.resolve({data:true});
   if(n==="leaderboard"){const pr=g("profiles")[0],k=(a||{}).kind,rd=g("rides").filter(r=>r.source===k),mo=new Date().toISOString().slice(0,7),sm=x=>x.reduce((y,r)=>y+(+r.km),0);
    const me=pr&&pr.public_ranking&&pr.username?[{username:pr.username,km_month:sm(rd.filter(r=>r.ride_on.startsWith(mo))),km_total:sm(rd),rides:rd.length}]:[];
    const fake=k==="gps"?[{username:"exemple_camille",km_month:64.2,km_total:402,rides:24},{username:"exemple_lea",km_month:18.9,km_total:131,rides:9}]:[{username:"exemple_malik",km_month:120,km_total:2210,rides:60},{username:"exemple_camille",km_month:84.5,km_total:612,rides:31}];
    return Promise.resolve({data:[...fake,...me]})}
-  ["scooters","logs","rides","profiles"].forEach(k=>localStorage.removeItem("demo_"+k));return ok()}};
+  if(n==="delete_my_account"){["scooters","logs","rides","profiles","battery_logs","goals"].forEach(k=>localStorage.removeItem("demo_"+k)); return ok()} return Promise.resolve({data:null})}};
 }
 const sb = DEMO ? mockSb() : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {auth:{experimental:{passkey:true}}});
 const $ = s => document.querySelector(s);
@@ -253,7 +260,7 @@ const TASKS = [
  {id:"nettoyage", n:"Nettoyer la trottinette (sans jet haute pression)", km:0, mois:1}
 ];
 
-let user=null, scooters=[], logs=[], rides=[], bat=[], profile=null;
+let user=null, scooters=[], logs=[], rides=[], bat=[], profile=null, sanc=[], goals=[], myRole=null, announce=null, aalOK=null;
 
 /* ====== Données ====== */
 async function load(){
@@ -264,6 +271,10 @@ async function load(){
  if(!profile&&user.user_metadata&&user.user_metadata.username){const {error}=await sb.from("profiles").upsert({id:user.id,username:user.user_metadata.username,public_ranking:false}); if(!error){const c2=await sb.from("profiles").select("*"); profile=(c2.data||[])[0]||null}}
  const d=await sb.from("rides").select("*").order("ride_on",{ascending:false}); rides=(d.data||[]).sort((x,y)=>String(y.ride_on).localeCompare(String(x.ride_on)));
  const e=await sb.from("battery_logs").select("*"); bat=e.data||[];
+ const sn=await sb.from("sanctions").select("*"); sanc=(sn.data||[]).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+ const gl=await sb.from("goals").select("*"); goals=gl.data||[];
+ const ro=await sb.rpc("my_role"); myRole=ro.data||null;
+ const an=await sb.rpc("get_announcement"); announce=(an.data&&an.data[0])||null;
 }
 
 /* ====== Routeur ====== */
@@ -276,21 +287,25 @@ const NAV = {
  classement:["Classement",'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>'],
  plus:["Plus",'<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>']
 };
-const PUBLIC = ["bienvenue","inscription","connexion","mentions","cgu","confidentialite","cookies","partage","desinscription"];
+const PUBLIC = ["bienvenue","inscription","connexion","mentions","cgu","confidentialite","cookies","partage","desinscription","rejoindre","licences"];
 async function route(){
  const raw=location.hash.replace("#/",""); hashQ=new URLSearchParams(raw.split("?")[1]||"");
  let r = raw.split("?")[0] || (user?"accueil":"bienvenue");
  if(!user && !PUBLIC.includes(r)) return location.hash="#/bienvenue";
  if(user && ["connexion","inscription","bienvenue"].includes(r)) r="accueil";
  document.body.className=(!user&&r==="bienvenue")?"land":"";
- $("#nav").innerHTML = user ? Object.entries(NAV).map(([k,[n,d]])=>`<a href="#/${k}" class="${(k===r||(k==="plus"&&["trottinettes","rappels","guides","compte","batterie","badges"].includes(r)))?"on":""}"><svg viewBox="0 0 24 24">${d}</svg>${n}</a>`).join("") : "";
+ $("#nav").innerHTML = user ? Object.entries(NAV).map(([k,[n,d]])=>`<a href="#/${k}" class="${(k===r||(k==="plus"&&["trottinettes","rappels","guides","compte","batterie","badges","bilan","admin"].includes(r)))?"on":""}"><svg viewBox="0 0 24 24">${d}</svg>${n}</a>`).join("") : "";
  $("#who").innerHTML = user ? `<button class="sec" style="margin:0" id="out">Déconnexion</button>` : (r==="connexion"||r==="inscription"?"":`<a class="btn" href="#/connexion" style="margin:0;padding:.45rem .9rem">Se connecter</a>`);
  if(user) $("#out").onclick = async()=>{await sb.auth.signOut()};
+ if(user&&sb.auth.mfa&&aalOK!=="ok"){const a=await sb.auth.mfa.getAuthenticatorAssuranceLevel(); if(a.data&&a.data.nextLevel==="aal2"&&a.data.currentLevel!=="aal2"){$("#nav").innerHTML="";$("#app").innerHTML="";return vMfa()} aalOK="ok"}
  if(user) await load();
- if(user && !(user.user_metadata&&user.user_metadata.cgu_accepted_at&&profile&&profile.username) && !["mentions","cgu","confidentialite","cookies","partage","desinscription"].includes(r)){$("#nav").innerHTML="";$("#app").innerHTML="";return vOnboard()}
+ if(user && !(user.user_metadata&&user.user_metadata.cgu_accepted_at&&profile&&profile.username) && !["mentions","cgu","confidentialite","cookies","partage","desinscription","rejoindre","licences"].includes(r)){$("#nav").innerHTML="";$("#app").innerHTML="";return vOnboard()}
  if(splashPending){splashPending=false; showSplash(profile&&profile.username)}
- const v = {accueil:vHome,trajets:vRides,partage:vShare,desinscription:vUnsub,batterie:vBattery,badges:vBadges,classement:vRank,plus:vPlus,trottinettes:vScoot,carnet:vLog,rappels:vDue,guides:vGuides,compte:vAccount,connexion:vLogin,inscription:vSignup,bienvenue:vLanding,mentions:vMentions,cgu:vCgu,confidentialite:vPriv,cookies:vCookies}[r] || (user?vHome:vLanding);
+ const pj=localStorage.getItem("pending_join"); if(user&&pj&&r!=="rejoindre"&&!["mentions","cgu","confidentialite","cookies","licences"].includes(r)){location.hash="#/rejoindre?c="+encodeURIComponent(pj); return}
+ const v = {accueil:vHome,trajets:vRides,partage:vShare,desinscription:vUnsub,batterie:vBattery,badges:vBadges,rejoindre:vJoin,licences:vLicences,bilan:vRecap,admin:vAdmin,classement:vRank,plus:vPlus,trottinettes:vScoot,carnet:vLog,rappels:vDue,guides:vGuides,compte:vAccount,connexion:vLogin,inscription:vSignup,bienvenue:vLanding,mentions:vMentions,cgu:vCgu,confidentialite:vPriv,cookies:vCookies}[r] || (user?vHome:vLanding);
  $("#app").innerHTML=""; v(); window.scrollTo(0,0);
+ if(user&&announce&&!localStorage.getItem("ann_"+announce.id)&&!document.getElementById("annb")){const ab=document.createElement("div"); ab.id="annb"; ab.className="warnbox"; ab.innerHTML=esc(announce.body)+' <a href="#" id="annx">Fermer</a>'; $("#app").prepend(ab); $("#annx").onclick=e=>{e.preventDefault(); localStorage.setItem("ann_"+announce.id,"1"); ab.remove()}}
+ if(r==="accueil"&&user){const gs=document.getElementById("gset"); if(gs) gs.onclick=askGoal; goalCheck(); celebrate(); whenFree(showNotices)}
  const kn=document.getElementById("kmn"); if(kn) countUp(kn);
  [...$("#app").children].forEach((e,i)=>{if(!e.classList.contains("lp-hero")) e.style.animationDelay=Math.min(i,8)*55+"ms"});
  const rv=document.querySelectorAll(".rv"); if(rv.length){const io="IntersectionObserver" in window&&!REDUCED?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15}):null; rv.forEach((el,i)=>{el.style.transitionDelay=(i%3)*90+"ms"; io?io.observe(el):el.classList.add("in")})}
@@ -333,13 +348,15 @@ function vLogin(){
  <button class="sec kbtn" id="pk" type="button">${KEY}Passkey</button>
  <p class="mute" style="margin:1rem 0 0"><a href="#" id="fg">Mot de passe oublié ?</a> · <a href="#" id="ml">Recevoir un lien de connexion par email</a></p></div>
  <a class="btn sec" href="#/inscription" style="display:block;margin:0">Nouvel arrivant ? Créer un compte</a></div>`;
- $("#in").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("#e").value,password:$("#p").value}); if(error) toast("Connexion impossible : "+error.message)};
+ $("#in").onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$("#e").value,password:$("#p").value}); if(error) toast(/banned/i.test(error.message)?"Ton compte est suspendu. Consulte tes emails ou écris à "+EDITEUR.email+" pour contester.":"Connexion impossible : "+error.message)};
  $("#gg").onclick=google;
  $("#pk").onclick=async()=>{if(!sb.auth.signInWithPasskey) return toast("Clés d'accès indisponibles."); const {error}=await sb.auth.signInWithPasskey(); if(error) toast("Clé d'accès : "+error.message)};
  $("#fg").onclick=async e=>{e.preventDefault(); if(!$("#e").value) return toast("Saisis ton email d'abord.");
   await sb.auth.resetPasswordForEmail($("#e").value,{redirectTo:location.origin}); toast("Si le compte existe, un email vient d'être envoyé.")};
- $("#ml").onclick=async e=>{e.preventDefault(); if(!$("#e").value) return toast("Saisis ton email d'abord.");
-  await sb.auth.signInWithOtp({email:$("#e").value,options:{shouldCreateUser:false,emailRedirectTo:location.origin}}); toast("Si le compte existe, un lien de connexion vient d'être envoyé.")};
+ $("#ml").onclick=async e=>{e.preventDefault(); const em=$("#e").value.trim(); if(!em) return toast("Saisis ton email d'abord.");
+  await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:false,emailRedirectTo:location.origin}}); toast("Si le compte existe, un lien et un code viennent d'être envoyés.");
+  if(!$("#otpb")){const b=document.createElement("div"); b.id="otpb"; b.innerHTML=`<label for="otp">Code reçu par email</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="10"><button id="otpy">Valider le code</button>`; $("#ml").closest("p").after(b);
+   $("#otpy").onclick=async()=>{const {error}=await sb.auth.verifyOtp({email:em,token:$("#otp").value.trim(),type:"email"}); if(error) toast("Code invalide ou expiré.")}}};
 }
 
 function vSignup(){
@@ -356,7 +373,7 @@ function vSignup(){
   if(!PSEUDO_OK(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
   if($("#p").value.length<8) return toast("Mot de passe trop court.");
   if(!$("#ok").checked) return toast("Coche la case d'acceptation des CGU.");
-  const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris.");
+  const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris ou réservé.");
   const {error}=await sb.auth.signUp({email:$("#e").value,password:$("#p").value,options:{data:{username:u,cgu_accepted_at:new Date().toISOString()}}});
   toast(error? "Création impossible : "+error.message : "Compte créé. Vérifie ta boîte mail si une confirmation est demandée.");
  };
@@ -371,9 +388,9 @@ function vOnboard(){
  $("#fin").onclick=async()=>{const u=$("#us").value.trim();
   if(!PSEUDO_OK(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
   if(!$("#ok").checked) return toast("Coche la case d'acceptation des CGU.");
-  if(u.toLowerCase()!==((profile||{}).username||"").toLowerCase()){const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris.")}
+  if(u.toLowerCase()!==((profile||{}).username||"").toLowerCase()){const av=await sb.rpc("username_available",{n:u}); if(av.data===false) return toast("Ce pseudo est déjà pris ou réservé.")}
   const {error}=await sb.from("profiles").upsert({id:user.id,username:u,public_ranking:!!(profile&&profile.public_ranking)});
-  if(error) return toast(error.code==="23505"?"Ce pseudo est déjà pris.":"Erreur : "+error.message);
+  if(error) return toast(pe(error));
   const r=await sb.auth.updateUser({data:{cgu_accepted_at:new Date().toISOString()}}); if(r.data&&r.data.user) user=r.data.user; route()};
 }
 
@@ -434,7 +451,7 @@ function vHome(){
  if(!scooters.length){$("#app").innerHTML=`<section class="panel"><span>${name?"Bienvenue "+name:"Bienvenue"}</span><h1>Ajoute ta première trottinette</h1><a class="btn light" style="margin:0" href="#/trottinettes">Ajouter ma trottinette</a></section>`+CHECK;return}
  const eur=logs.reduce((a,l)=>a+(+l.cost||0),0), km=scooters.reduce((a,s)=>a+s.km,0), p=n=>n>1?"s":"";
  $("#app").innerHTML=`<section class="panel"><span>${name?"Salut "+name:"Tableau de bord"}</span><div class="big" style="margin-top:.5rem"><span id="kmn">${km}</span><small> km au compteur</small></div></section>
- <div class="stats3"><div class="tile"><b>${scooters.length}</b>trottinette${p(scooters.length)}</div><div class="tile"><b>${logs.length}</b>intervention${p(logs.length)}</div><div class="tile"><b>${Math.round(eur)} €</b>dépensés</div><div class="tile"><b>${km>0&&eur>0?(eur/km*100).toFixed(1).replace(".",",")+" c":"—"}</b>coût par km</div></div>`+
+ <div class="stats3"><div class="tile"><b>${scooters.length}</b>trottinette${p(scooters.length)}</div><div class="tile"><b>${logs.length}</b>intervention${p(logs.length)}</div><div class="tile"><b>${Math.round(eur)} €</b>dépensés</div><div class="tile"><b>${km>0&&eur>0?(eur/km*100).toFixed(1).replace(".",",")+" c":"—"}</b>coût par km</div></div>${streakCard()}${goalCard()}`+
  scooters.map(s=>{const c=calc(s),late=c.filter(x=>x.r>=1),soon=c.filter(x=>x.r>=.8&&x.r<1),i=ins(s);
   return `<div class="card"><div class="scoot">${SC}<div><h3>${esc(s.nickname||s.model)}</h3><div class="mute">${esc(s.model)}, ${s.km} km</div></div></div>
   <span class="tag ${i[0]}">${i[1]}</span>${late.length?`<span class="tag late">${late.length} à faire</span>`:""}${soon.length?`<span class="tag soon">${soon.length} bientôt</span>`:""}${!late.length&&!soon.length?`<span class="tag fine">Entretien à jour</span>`:""}
@@ -528,7 +545,7 @@ const gpt = p => p[1].toFixed(5)+","+p[0].toFixed(5);
 const gmaps = c => {const mid=c.filter((_,i)=>i>0&&i<c.length-1&&i%Math.ceil(c.length/8)===0).slice(0,8); return "https://www.google.com/maps/dir/?api=1&travelmode=bicycling&origin="+gpt(c[0])+"&destination="+gpt(c[c.length-1])+(mid.length?"&waypoints="+mid.map(gpt).join("%7C"):"")};
 const amaps = c => "https://maps.apple.com/?dirflg=w&saddr="+gpt(c[0])+"&daddr="+gpt(c[c.length-1]);
 function leaf(el,coords,live){
- const m=L.map(el), ll=coords.map(p=>[p[1],p[0]]);
+ const m=L.map(el), ll=coords.map(p=>[p[1],p[0]]); el._lm=m;
  const tl=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>'}).addTo(m); let te=false; tl.on("tileerror",()=>{if(!te){te=true; toast("Le fond de carte n'a pas pu se charger.")}});
  const pl=L.polyline(ll,{color:"#3a3dff",weight:5,opacity:.9}).addTo(m);
  if(ll.length>1) m.fitBounds(pl.getBounds(),{padding:[24,24]}); else m.setView(ll[0],15);
@@ -593,7 +610,7 @@ function tkPanel(){
  <button id="ts">Enregistrer la sortie</button><button class="sec" id="tx">Supprimer</button>`;
 }
 function tkRender(){$("#tkp").innerHTML=tkPanel(); const g=id=>document.getElementById(id);
- if(g("t0")) g("t0").onclick=()=>{if(tkStart($("#tsc").value)) tkRender()};
+ if(g("t0")) g("t0").onclick=()=>preRide($("#tsc").value||null,()=>{if(tkStart($("#tsc").value)) tkRender()});
  if(g("t1")) g("t1").onclick=()=>{tkStop(); tkRender()};
  if(g("tx")) g("tx").onclick=()=>{tk=null; localStorage.removeItem("tk_save"); tkRender()};
  if(g("ts")) g("ts").onclick=tkSave;
@@ -704,7 +721,7 @@ function vRides(){
  $("#app").innerHTML=`<h1>Trajets</h1>${resume}
  <div class="card"><h2>Suivre ma sortie (GPS)</h2><div id="tkp"></div></div>
  <div class="card"><h2>Générer un itinéraire</h2>
- <label class="chk"><input id="gc" type="checkbox" ${geoOK()?"checked":""}><span>J'accepte que ce que je tape dans les champs d'adresse soit envoyé à Photon (Komoot) pour les suggestions, que les points du trajet soient envoyés à FOSSGIS pour calculer l'itinéraire, et que mon navigateur charge les cartes depuis OpenStreetMap. Voir la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>
+ <label class="chk"><input id="gc" type="checkbox" ${geoOK()?"checked":""}><span>J'accepte que ce que je tape dans les champs d'adresse soit envoyé à Photon (Komoot) pour les suggestions, que les points du trajet soient envoyés à FOSSGIS pour calculer l'itinéraire, que mon navigateur charge les cartes depuis OpenStreetMap, et que la météo du lieu de départ soit demandée à Open-Meteo. Voir la <a href="#/confidentialite">politique de confidentialité</a>.</span></label>
  <div class="acw"><label for="a">Départ</label><input id="a" autocomplete="off" placeholder="Tape une adresse puis choisis dans la liste"></div><button class="sec" id="my" type="button">Utiliser ma position</button>
  <div class="row"><div><label for="md">Type</label><select id="md"><option value="loop">Boucle depuis le départ</option><option value="ab">De A à B</option></select></div><div><label for="au">Autonomie réelle (km)</label><input id="au" type="number" min="3" value="${esc(localStorage.getItem("au")||20)}"></div></div>
  <div id="wl"><label for="dk">Distance voulue (km)</label><input id="dk" type="number" min="1" max="60" value="10"></div>
@@ -751,14 +768,16 @@ function vRides(){
 }
 function showRoute(){
  const c=rt.geometry.coordinates, km=rt.distance/1000, au=+$("#au").value||20, pct=Math.round(km/au*100);
- $("#res").innerHTML=`<div id="rmap"></div>
+ $("#res").innerHTML=`<div id="rmap"></div><button class="sec" id="plc" type="button">Afficher les lieux utiles</button><div id="wx"></div>
  <p><b>${km.toFixed(1)} km</b>, environ ${Math.round(km/25*60)} min à 25 km/h au maximum <span class="tag ${pct>80?"late":pct>60?"soon":"fine"}">≈ ${pct} % de batterie</span></p>
  <p class="mute">Itinéraire calculé pour le vélo : vérifie qu'il est autorisé aux trottinettes (ni trottoir, ni voie rapide, ni zone interdite) et respecte la limite de 25 km/h. Les estimations sont indicatives.</p>
  <div class="btnrow"><button id="nvgo">Lancer la navigation</button>${rt.ab?"":`<button class="sec" id="rg">Autre proposition</button>`}</div>
  <div class="btnrow"><button class="sec" id="shr">Partager le lien</button><a class="btn sec" target="_blank" rel="noopener" href="${gmaps(c)}">Google Maps</a>${rt.ab?`<a class="btn sec" target="_blank" rel="noopener" href="${amaps(c)}">Plans</a>`:""}</div>
  <details style="margin-top:.8rem"><summary>Plus d'options</summary><button class="sec" id="gpx">Télécharger le fichier GPX</button><button class="sec" id="rs">Reporter la distance</button></details>`;
  mapInto($("#rmap"),c);
- $("#nvgo").onclick=()=>navWarn(()=>navRun(rt));
+ $("#plc").onclick=()=>togglePlaces($("#plc"),document.querySelector("#rmap .map"));
+ weather(c[0][1],c[0][0]).then(x=>{const e=document.getElementById("wx"); if(e) e.innerHTML=weatherHtml(x)}).catch(()=>{});
+ $("#nvgo").onclick=()=>navWarn(()=>preRide(null,()=>navRun(rt)));
  if($("#rg")) $("#rg").onclick=()=>$("#go").click();
  $("#rs").onclick=()=>{$("#rk").value=km.toFixed(1); $("#rk").scrollIntoView({block:"center"})};
  $("#shr").onclick=async()=>{
@@ -781,25 +800,270 @@ function vShare(){
 }
 const vUnsub = () => $("#app").innerHTML=`<div class="authc"><div class="card"><h1>Désinscription</h1><p>Tu ne recevras plus de rappels par email. Tu peux les réactiver à tout moment dans Compte.</p><a class="btn" href="#/connexion">Aller sur L'Atelier Volt</a></div></div>`;
 
-/* ====== Classement ====== */
-async function vRank(){
- const me=profile||{};
- $("#app").innerHTML=`<h1>Classements</h1><div class="warnbox"><b>Tracé GPS</b> : sorties enregistrées avec le suivi. <b>Déclaré</b> : km saisis à la main.</div>
- <div class="card"><h2>Ma participation</h2>${me.username?`<label class="chk"><input id="pp" type="checkbox" ${me.public_ranking?"checked":""}><span>Je veux apparaître dans les classements sous le pseudo <b>${esc(me.username)}</b>. Mon pseudo, mes km du mois, mes km totaux et mon nombre de sorties seront visibles par les autres utilisateurs connectés. Je peux changer d'avis à tout moment en décochant cette case.</span></label><button id="sp">Enregistrer</button>`:`<p>Choisis d'abord un pseudo dans <a href="#/compte">Compte</a>.</p>`}</div><div id="lb"><p class="mute">Chargement…</p></div>`;
- if(me.username) $("#sp").onclick=async()=>{const {error}=await sb.from("profiles").upsert({id:user.id,username:me.username,public_ranking:$("#pp").checked}); toast(error?"Erreur : "+error.message:"Enregistré."); if(!error) route()};
- const D={gps:(await sb.rpc("leaderboard",{kind:"gps"})).data||[], declared:(await sb.rpc("leaderboard",{kind:"declared"})).data||[]};
- let kind="gps", k="km_month";
+/* ====== Classements (public et privés), signalements ====== */
+let rkTab="public", rkGroup=null;
+const pe = e => e.code==="23505"?"Ce pseudo est déjà pris.":/réservé/.test(e.message||"")?"Ce pseudo est réservé.":"Erreur : "+e.message;
+const reportLink = (type,id,label) => `<a href="#" class="rp" data-t="${type}" data-i="${esc(id||"")}" data-l="${esc(label)}" style="font-size:.8rem;color:var(--mute);margin-left:.5rem">Signaler</a>`;
+function askReport(type,id,label){
+ const m=sheet("rpm",`<h2>Signaler</h2><p class="mute">${esc(label)}</p><label for="rr">Motif</label><select id="rr"><option>Nom ou pseudo inapproprié</option><option>Usurpation d'identité</option><option>Contenu illicite ou haineux</option><option>Autre</option></select><label for="rd2">Détails (facultatif)</label><textarea id="rd2" rows="3" maxlength="500"></textarea><div class="btnrow"><button id="rsd">Envoyer</button><button class="sec" id="rsx">Annuler</button></div>`);
+ $("#rsx").onclick=()=>m.remove();
+ $("#rsd").onclick=async()=>{const {error}=await sb.rpc("report_content",{p_ttype:type,p_tid:id||null,p_label:label,p_reason:$("#rr").value,p_details:$("#rd2").value||null}); if(error) return toast(/déjà/.test(error.message)?"Tu as déjà signalé ceci.":"Erreur : "+error.message); m.remove(); toast("Merci, ton signalement a été transmis.")};
+}
+const bindReports = root => root.querySelectorAll(".rp").forEach(a=>a.onclick=e=>{e.preventDefault(); askReport(a.dataset.t,a.dataset.i,a.dataset.l)});
+const inviteLink = code => location.origin+location.pathname+"#/rejoindre?c="+code;
+async function shareLink(url,title){
+ try{if(navigator.share) await navigator.share({title,url}); else{await navigator.clipboard.writeText(url); toast("Lien copié.")}}
+ catch(e){if(e.name!=="AbortError"){try{await navigator.clipboard.writeText(url); toast("Lien copié.")}catch(_){toast("Copie impossible.")}}}
+}
+function boards(box,D,me,k0){
+ let kind="gps", k=k0||"km_month";
  const draw=()=>{const rows=[...D[kind]].sort((a,b)=>b[k]-a[k]), B=(a,l,on)=>`<button class="${on?"":"sec"}" data-${a[0]}="${a[1]}">${l}</button>`;
-  $("#lb").innerHTML=`<div class="card">${B(["g","gps"],"Tracé GPS",kind==="gps")}${B(["g","declared"],"Déclaré",kind==="declared")}<br>${B(["s","km_month"],"Ce mois-ci",k==="km_month")}${B(["s","km_total"],"Total",k==="km_total")}${B(["s","rides"],"Sorties",k==="rides")}`+
-  (rows.length?rows.map((r,i)=>`<div style="display:grid;grid-template-columns:2rem 1fr auto;margin-top:.6rem;${me.username===r.username?"font-weight:700;color:var(--acc)":""}"><span>${i+1}</span><span>${esc(r.username)}</span><span>${k==="rides"?r[k]:(+r[k]).toFixed(1)+" km"}</span></div>`).join(""):`<p class="mute">Personne dans ce classement pour l'instant.</p>`)+
+  box.innerHTML=`<div class="card">${B(["g","gps"],"Tracé GPS",kind==="gps")}${B(["g","declared"],"Déclaré",kind==="declared")}<br>${B(["s","km_month"],"Ce mois-ci",k==="km_month")}${B(["s","km_total"],"Total",k==="km_total")}${B(["s","rides"],"Sorties",k==="rides")}`+
+  (rows.length?rows.map((r,i)=>`<div style="display:grid;grid-template-columns:2rem 1fr auto;margin-top:.6rem;${me.username===r.username?"font-weight:700;color:var(--acc)":""}"><span>${i+1}</span><span>${esc(r.username)}${me.username===r.username?"":reportLink("user",null,r.username)}</span><span>${k==="rides"?r[k]:(+r[k]).toFixed(1)+" km"}</span></div>`).join(""):`<p class="mute">Personne dans ce classement pour l'instant.</p>`)+
   (DEMO?`<p class="mute">Les pseudos « exemple_ » sont fictifs (mode démo).</p>`:"")+`</div>`;
-  document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{kind=b.dataset.g;draw()}); document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{k=b.dataset.s;draw()})};
+  box.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{kind=b.dataset.g;draw()}); box.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{k=b.dataset.s;draw()}); bindReports(box)};
  draw();
+}
+async function vRank(){
+ $("#app").innerHTML=`<h1>Classements</h1><div class="btnrow" style="margin:0 0 1rem"><button data-rt="public" class="${rkTab==="public"?"":"sec"}">Public</button><button data-rt="groups" class="${rkTab==="groups"?"":"sec"}">Mes classements</button></div><div id="rkc"></div>`;
+ document.querySelectorAll("[data-rt]").forEach(b=>b.onclick=()=>{rkTab=b.dataset.rt; rkGroup=null; vRank()});
+ rkTab==="public"?rankPublic():rankGroups();
+}
+async function rankPublic(){
+ const me=profile||{}, box=$("#rkc");
+ box.innerHTML=`<div class="warnbox"><b>Tracé GPS</b> : sorties enregistrées avec le suivi. <b>Déclaré</b> : km saisis à la main.</div>
+ <div class="card"><h2>Ma participation</h2>${me.username?`<label class="chk"><input id="pp" type="checkbox" ${me.public_ranking?"checked":""}><span>Je veux apparaître dans les classements publics sous le pseudo <b>${esc(me.username)}</b>. Mon pseudo, mes km du mois, mes km totaux et mon nombre de sorties seront visibles par les autres utilisateurs connectés. Je peux changer d'avis à tout moment en décochant cette case.</span></label><button id="sp">Enregistrer</button>`:`<p>Choisis d'abord un pseudo dans <a href="#/compte">Compte</a>.</p>`}</div><div id="lb"><p class="mute">Chargement…</p></div>`;
+ if(me.username) $("#sp").onclick=async()=>{const {error}=await sb.from("profiles").upsert({id:user.id,username:me.username,public_ranking:$("#pp").checked}); toast(error?"Erreur : "+error.message:"Enregistré."); if(!error){profile.public_ranking=$("#pp").checked}};
+ const D={gps:(await sb.rpc("leaderboard",{kind:"gps"})).data||[], declared:(await sb.rpc("leaderboard",{kind:"declared"})).data||[]};
+ boards($("#lb"),D,me);
+}
+async function rankGroups(){
+ const box=$("#rkc"); box.innerHTML=`<p class="mute">Chargement…</p>`;
+ const {data}=await sb.rpc("my_groups"), gs=data||[];
+ if(rkGroup&&!gs.find(g=>g.id===rkGroup)) rkGroup=null;
+ if(rkGroup) return groupView(gs.find(g=>g.id===rkGroup));
+ box.innerHTML=`<div class="card"><h2>Mes classements privés</h2><p class="mute">Compare tes km avec tes amis, sans passer par le classement public.</p>${gs.length?gs.map(g=>`<div class="row" style="align-items:center;margin-top:.7rem"><div><b>${esc(g.name)}</b><div class="mute">${g.members} membre${g.members>1?"s":""}</div></div><div style="flex:0 0 auto"><button class="sec" data-g="${g.id}" style="margin:0">Ouvrir</button></div></div>`).join(""):`<p class="mute" style="margin-top:.6rem">Tu n'es dans aucun classement privé.</p>`}<button id="gnew">Créer un classement</button></div>`;
+ box.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{rkGroup=b.dataset.g; rankGroups()});
+ $("#gnew").onclick=()=>{
+  const m=sheet("gnm",`<h2>Créer un classement</h2><label for="gn">Nom du classement</label><input id="gn" maxlength="40" placeholder="Les rois du bitume"><p class="mute">Entre 3 et 40 caractères, sans lien ni adresse email. Les noms sont modérés.</p><div class="btnrow"><button id="gny">Créer</button><button class="sec" id="gnx">Annuler</button></div>`);
+  $("#gnx").onclick=()=>m.remove();
+  $("#gny").onclick=async()=>{const {data,error}=await sb.rpc("create_group",{p_name:$("#gn").value}); if(error) return toast(error.message); m.remove(); rkGroup=data.id; toast("Classement créé : invite tes amis avec le lien."); rankGroups()};
+ };
+}
+async function groupView(g){
+ const box=$("#rkc"), owner=g.owner_id===user.id, me=profile||{};
+ box.innerHTML=`<button class="sec" id="gback" style="margin:0 0 .8rem">Retour</button><h2>${esc(g.name)}</h2><p class="mute">${g.members} membre${g.members>1?"s":""}</p>
+ ${owner?`<div class="card"><h3>Inviter des amis</h3><p class="mute">Toute personne qui a ce lien peut rejoindre, dans la limite de 50 membres.</p><input readonly id="glk" value="${esc(inviteLink(g.invite_code))}"><div class="btnrow"><button id="gsh">Partager le lien</button><button class="sec" id="gtg">${g.invite_active?"Désactiver le lien":"Réactiver le lien"}</button><button class="sec" id="grs">Nouveau lien</button></div>${g.invite_active?"":`<p class="mute">Le lien est désactivé : personne ne peut rejoindre.</p>`}</div>`:""}
+ <div id="glb"><p class="mute">Chargement…</p></div>
+ ${owner?`<div class="card"><h3>Membres</h3><div id="gml"></div></div>`:""}
+ <div class="card">${owner?`<button class="danger" id="gdel" style="margin:0">Supprimer ce classement</button>`:`<button class="sec" id="glv" style="margin:0">Quitter ce classement</button>${reportLink("group",g.id,g.name)}`}</div>`;
+ bindReports(box);
+ $("#gback").onclick=()=>{rkGroup=null; rankGroups()};
+ const act=async(fn,msg)=>{const {error}=await fn(); if(error) return toast(error.message); if(msg) toast(msg); rankGroups()};
+ if(owner){
+  $("#gsh").onclick=()=>shareLink(inviteLink(g.invite_code),"Rejoins mon classement "+g.name);
+  $("#gtg").onclick=()=>act(()=>sb.rpc("set_invite_active",{p_gid:g.id,p_active:!g.invite_active}));
+  $("#grs").onclick=()=>{if(confirm("Générer un nouveau lien ? L'ancien ne fonctionnera plus.")) act(()=>sb.rpc("reset_invite",{p_gid:g.id}),"Nouveau lien créé.")};
+  $("#gdel").onclick=()=>{if(confirm("Supprimer définitivement ce classement ?")){rkGroup=null; act(()=>sb.rpc("delete_group",{p_gid:g.id}),"Classement supprimé.")}};
+  sb.rpc("group_members_list",{p_gid:g.id}).then(({data})=>{$("#gml").innerHTML=(data||[]).map(u=>`<div class="row" style="align-items:center;margin-top:.5rem"><span>${esc(u.username||"?")}${u.is_owner?` <span class="mute">(créateur)</span>`:""}</span>${u.is_owner?"":`<div style="flex:0 0 auto"><button class="sec" data-rm="${u.user_id}" style="margin:0">Retirer</button></div>`}</div>`).join(""); document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{if(confirm("Retirer ce membre ?")) act(()=>sb.rpc("remove_member",{p_gid:g.id,p_uid:b.dataset.rm}),"Membre retiré.")})});
+ } else $("#glv").onclick=()=>{if(confirm("Quitter ce classement ?")){rkGroup=null; act(()=>sb.rpc("leave_group",{p_gid:g.id}),"Tu as quitté le classement.")}};
+ const D={gps:(await sb.rpc("group_leaderboard",{p_gid:g.id,p_kind:"gps"})).data||[], declared:(await sb.rpc("group_leaderboard",{p_gid:g.id,p_kind:"declared"})).data||[]};
+ boards($("#glb"),D,me);
+}
+async function vJoin(){
+ const code=hashQ.get("c")||"";
+ $("#app").innerHTML=`<div class="authc"><div class="card"><p class="mute">Chargement…</p></div></div>`;
+ const {data}=code?await sb.rpc("group_preview",{p_code:code}):{data:null};
+ if(!data){localStorage.removeItem("pending_join"); $("#app").innerHTML=`<div class="authc"><div class="card"><div class="mark">${LOGO(44)}</div><h1>Lien invalide</h1><p class="mute">Cette invitation est introuvable ou a été désactivée.</p><a class="btn" href="#/${user?"classement":"bienvenue"}">Continuer</a></div></div>`; return}
+ const head=`<div class="mark">${LOGO(44)}</div><h1>Tu es invité !</h1><p>Rejoins le classement privé <b>${esc(data.name)}</b> (${data.members} membre${data.members>1?"s":""}) sur L'Atelier Volt.</p>`;
+ if(!user){localStorage.setItem("pending_join",code); $("#app").innerHTML=`<div class="authc"><div class="card">${head}<div class="btnrow"><a class="btn" href="#/inscription">Créer un compte</a><a class="btn sec" href="#/connexion">Se connecter</a></div><p class="mute" style="margin-top:1rem">Une fois connecté, tu pourras rejoindre le classement.</p></div></div>`; return}
+ $("#app").innerHTML=`<div class="authc"><div class="card">${head}<label class="chk"><input id="jc" type="checkbox"><span>J'accepte que mon pseudo, mes km du mois, mes km totaux et mon nombre de sorties soient visibles par les membres de ce classement. Je peux le quitter à tout moment.</span></label><div class="btnrow"><button id="jy">Rejoindre</button><button class="sec" id="jn">Refuser</button></div></div></div>`;
+ $("#jn").onclick=()=>{localStorage.removeItem("pending_join"); location.hash="#/accueil"};
+ $("#jy").onclick=async()=>{if(!$("#jc").checked) return toast("Coche la case pour rejoindre."); const r=await sb.rpc("join_group",{p_code:code}); if(r.error) return toast(r.error.message); localStorage.removeItem("pending_join"); rkTab="groups"; rkGroup=r.data.id; toast("Bienvenue dans le classement !"); location.hash="#/classement"};
+}
+
+/* ====== Série, objectif du mois, avant de partir, météo, lieux utiles, bilan ====== */
+const wkey = d => {const x=typeof d==="string"?new Date(d+"T12:00:00"):new Date(d); x.setHours(12,0,0,0); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0")};
+function streakInfo(rs){
+ rs=rs||rides; const set=new Set(rs.map(r=>wkey(r.ride_on))), keys=[...set].sort(); let best=0, run=0, prev=null;
+ keys.forEach(k=>{const d=new Date(k+"T12:00:00"); run=(prev&&Math.round((d-prev)/6048e5)===1)?run+1:1; best=Math.max(best,run); prev=d});
+ const w=new Date(); let n=0; if(!set.has(wkey(w))) w.setDate(w.getDate()-7);
+ while(set.has(wkey(w))){n++; w.setDate(w.getDate()-7)}
+ return {n,best,alive:set.has(wkey(new Date()))};
+}
+const BOLT='<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>';
+function streakCard(){
+ if(!rides.length) return "";
+ const s=streakInfo(); if(!s.n) return `<div class="card"><h3>Série</h3><p class="mute">Roule cette semaine pour lancer ta série.</p></div>`;
+ return `<div class="card streak"><div class="ico"><svg viewBox="0 0 24 24">${BOLT}</svg></div><div><b style="font-size:1.25rem">${s.n} semaine${s.n>1?"s":""} d'affilée</b><div class="mute">${s.alive?"Tu as roulé cette semaine.":"Roule cette semaine pour continuer ta série."}</div></div></div>`;
+}
+function bigModal(title,text){
+ const m=sheet("stm",`<div class="stk"><div class="stk-b"><svg viewBox="0 0 24 24">${BOLT}</svg></div>${[0,1,2,3,4,5,6,7].map(i=>`<i style="--a:${i*45}deg"></i>`).join("")}</div><h2 style="text-align:center">${esc(title)}</h2><p style="text-align:center">${esc(text)}</p><button id="stY" style="width:100%">Super</button>`);
+ $("#stY").onclick=()=>m.remove();
+}
+const MS=[2,4,8,12,26,52];
+function celebrate(){
+ const s=streakInfo(), key="streak_cel_"+user.id, reached=MS.filter(m=>m<=s.n).pop()||0, last=+localStorage.getItem(key)||0;
+ localStorage.setItem(key,reached);
+ if(reached>last) whenFree(()=>bigModal(reached+" semaines d'affilée !","Tu roules chaque semaine : continue comme ça, et pense à ton entretien."));
+}
+const mkey = () => {const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")};
+const monthKm = mk => rides.filter(r=>String(r.ride_on).startsWith(mk)).reduce((a,r)=>a+(+r.km),0);
+function goalCard(){
+ const mk=mkey(), g=goals.find(x=>x.month===mk), done=monthKm(mk);
+ if(!g) return `<div class="card"><h3>Objectif du mois</h3><p class="mute">Fixe-toi un nombre de km à rouler ce mois-ci.</p><button id="gset" style="margin-top:0">Choisir un objectif</button></div>`;
+ const p=Math.min(100,Math.round(done/g.km_goal*100));
+ return `<div class="card"><h3>Objectif du mois</h3><b style="font-size:1.4rem">${done.toFixed(1)}</b> <span class="mute">sur ${g.km_goal} km</span><div class="bar"><i class="${p>=100?"fine":"soon"}" style="width:${p}%"></i></div>${p>=100?`<span class="tag fine" style="margin-top:.6rem">Objectif atteint</span>`:`<div class="mute" style="margin-top:.5rem">Encore ${(g.km_goal-done).toFixed(1)} km</div>`}<button class="sec" id="gset">Modifier</button></div>`;
+}
+function askGoal(){
+ const mk=mkey(), g=goals.find(x=>x.month===mk), m=sheet("gom",`<h2>Objectif du mois</h2><label for="gk">Kilomètres à rouler ce mois-ci</label><input id="gk" type="number" min="1" max="5000" value="${g?g.km_goal:50}"><div class="btnrow"><button id="gy">Enregistrer</button><button class="sec" id="gx">Annuler</button></div>`);
+ $("#gx").onclick=()=>m.remove();
+ $("#gy").onclick=async()=>{const v=Math.round(+$("#gk").value); if(!(v>=1&&v<=5000)) return toast("Choisis entre 1 et 5 000 km."); const {error}=await sb.from("goals").upsert({user_id:user.id,month:mk,km_goal:v}); if(error) return toast("Erreur : "+error.message); m.remove(); route()};
+}
+function goalCheck(){
+ const mk=mkey(), g=goals.find(x=>x.month===mk); if(!g) return; const key="goal_cel_"+user.id+"_"+mk;
+ if(monthKm(mk)>=g.km_goal&&!localStorage.getItem(key)){localStorage.setItem(key,"1"); whenFree(()=>bigModal("Objectif atteint !","Tu as roulé "+monthKm(mk).toFixed(1)+" km ce mois-ci."))}
+}
+function preRide(sid,cb){
+ const items=[]; (sid?scooters.filter(s=>s.id===sid):scooters).forEach(s=>{const n=s.nickname||s.model; calc(s).filter(x=>x.r>=1).forEach(x=>items.push(n+" : "+x.t.n)); const i=ins(s); if(s.insurance_until&&i[0]==="late") items.push(n+" : assurance expirée"); else if(s.insurance_until&&i[0]==="soon") items.push(n+" : "+i[1].toLowerCase())});
+ if(!items.length) return cb();
+ const m=sheet("prm",`<h2>Avant de partir</h2><p>Ces points demandent ton attention :</p><ul>${items.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><div class="btnrow"><button id="prY">Partir quand même</button><a class="btn sec" href="#/rappels" id="prR">Voir les rappels</a></div>`);
+ $("#prY").onclick=()=>{m.remove(); cb()}; $("#prR").onclick=()=>m.remove();
+}
+const WMO = c => c===0?"Ciel dégagé":c<=3?"Nuageux":c<=48?"Brouillard":c<=57?"Bruine":c<=67?"Pluie":c<=77?"Neige":c<=82?"Averses":c<=86?"Averses de neige":"Orage";
+async function weather(lat,lon){
+ const j=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,wind_speed_10m,weather_code&hourly=precipitation_probability&forecast_hours=4&timezone=auto`)).json();
+ const c=j.current, rain=Math.max(0,...((j.hourly&&j.hourly.precipitation_probability)||[0]));
+ return {t:Math.round(c.temperature_2m),w:Math.round(c.wind_speed_10m),code:c.weather_code,rain};
+}
+function weatherHtml(x){
+ const w=[]; if(x.rain>=50||(x.code>=51&&x.code<=82)) w.push("Chaussée glissante possible : prudence et distances de freinage allongées."); if(x.w>=40) w.push("Vent fort : prudence."); if(x.t<=2) w.push("Risque de verglas.");
+ return `<div class="card" style="margin:.8rem 0 0"><b>${esc(WMO(x.code))}, ${x.t} °C</b><div class="mute">Vent ${x.w} km/h, risque de pluie ${x.rain} % dans les 4 prochaines heures</div>${w.map(t=>`<div style="margin-top:.4rem;color:var(--warn)">${t}</div>`).join("")}<div class="mute" style="font-size:.8rem;margin-top:.4rem">Météo : Open-Meteo.com</div></div>`;
+}
+async function placesFetch(m){
+ if(m.getZoom()<12){toast("Zoome pour voir les lieux utiles."); return []}
+ const b=m.getBounds(), bb=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].map(x=>x.toFixed(5)).join(",");
+ const q=`[out:json][timeout:15];(node["shop"="bicycle"](${bb});node["amenity"="bicycle_parking"](${bb});node["amenity"="charging_station"](${bb}););out 80;`;
+ const j=await (await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent(q)})).json(); return j.elements||[];
+}
+function togglePlaces(btn,mapEl){
+ const m=mapEl&&mapEl._lm; if(!m) return toast("Affiche d'abord la carte.");
+ if(m._pl){m.off("moveend",m._pf); m.removeLayer(m._pl); m._pl=null; btn.textContent="Afficher les lieux utiles"; return}
+ const go=()=>{
+  const run=async()=>{try{const els=await placesFetch(m); if(!m._pl) return; m._pl.clearLayers();
+   els.forEach(e=>{const t=e.tags||{}, k=t.shop==="bicycle"?["Magasin ou réparateur de vélos","#3a3dff"]:t.amenity==="bicycle_parking"?["Parking à vélos","#0f8a64"]:["Borne de recharge","#d9480f"];
+    L.circleMarker([e.lat,e.lon],{radius:7,color:"#fff",weight:2,fillColor:k[1],fillOpacity:1}).bindPopup(`<b>${esc(t.name||k[0])}</b><br>${k[0]}`).addTo(m._pl)})}catch(err){toast("Lieux utiles indisponibles pour le moment.")}};
+  m._pl=L.layerGroup().addTo(m); let t; m._pf=()=>{clearTimeout(t); t=setTimeout(run,800)}; m.on("moveend",m._pf); btn.textContent="Masquer les lieux utiles"; run();
+ };
+ if(localStorage.getItem("places_ok")==="1") return go();
+ const s=sheet("plm",`<h2>Lieux utiles</h2><p>Pour afficher les magasins de vélos, les parkings et les bornes de recharge, la zone visible de la carte est envoyée à l'API Overpass (OpenStreetMap), qui reçoit aussi ton adresse IP.</p><div class="btnrow"><button id="plY">Accepter et afficher</button><button class="sec" id="plN">Annuler</button></div>`);
+ $("#plN").onclick=()=>s.remove(); $("#plY").onclick=()=>{localStorage.setItem("places_ok","1"); s.remove(); go()};
+}
+function shareCanvas(c,name){c.toBlob(async b=>{const f=new File([b],name,{type:"image/png"}); if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:"L'Atelier Volt"})}catch(e){}} else{const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click()}})}
+function vRecap(){
+ const ys=[...new Set([...rides.map(r=>String(r.ride_on).slice(0,4)),...logs.map(l=>String(l.done_on).slice(0,4)),String(new Date().getFullYear())])].sort().reverse(), y=hashQ.get("y")||ys[0];
+ const rs=rides.filter(r=>String(r.ride_on).startsWith(y)), ls=logs.filter(l=>String(l.done_on).startsWith(y));
+ const km=rs.reduce((a,r)=>a+(+r.km),0), longest=Math.max(0,...rs.map(r=>+r.km)), eur=ls.reduce((a,l)=>a+(+l.cost||0),0), hrs=rs.reduce((a,r)=>a+(+r.duration_s||0),0)/3600;
+ const months=[...Array(12)].map((_,i)=>rs.filter(r=>+String(r.ride_on).slice(5,7)===i+1).reduce((a,r)=>a+(+r.km),0)), mi=months.indexOf(Math.max(...months)), mn=new Date(2000,mi,1).toLocaleDateString("fr-FR",{month:"long"});
+ const best=streakInfo(rs).best, mx=Math.max(1,...months);
+ const T=(b,l)=>`<div class="tile"><b>${b}</b>${l}</div>`;
+ $("#app").innerHTML=`<h1>Bilan ${esc(y)}</h1><select id="ry">${ys.map(v=>`<option ${v===y?"selected":""}>${v}</option>`).join("")}</select>
+ <div class="panel" style="margin-top:1rem"><span>Kilomètres parcourus</span><div class="big" style="margin-top:.5rem">${Math.round(km)}<small> km</small></div></div>
+ <div class="stats3">${T(rs.length,"sorties")}${T(longest?longest.toFixed(1)+" km":"—","plus longue sortie")}${T(km?mn:"—","mois le plus actif")}${T(Math.round(eur)+" €","dépensés en entretien")}${T(ls.length,"interventions")}${T(best?best+" sem.":"—","meilleure série")}</div>
+ <div class="card"><h3>Km par mois</h3><svg viewBox="0 0 300 100" style="width:100%">${months.map((v,i)=>{const h=v/mx*70; return `<rect x="${i*25+3}" y="${80-h}" width="19" height="${h}" rx="4" fill="var(--acc)"/><text x="${i*25+12.5}" y="94" text-anchor="middle" font-size="8" fill="var(--mute)">${"JFMAMJJASOND"[i]}</text>`}).join("")}</svg></div>
+ ${hrs?`<p class="mute">${hrs.toFixed(1)} h de roulage suivies au GPS.</p>`:""}<button id="rsh">Partager mon bilan</button>`;
+ $("#ry").onchange=()=>{location.hash="#/bilan?y="+$("#ry").value};
+ $("#rsh").onclick=()=>{
+  const c=document.createElement("canvas"); c.width=1080; c.height=1350; const g=c.getContext("2d");
+  g.fillStyle="#3a3dff"; g.fillRect(0,0,1080,1350); g.fillStyle="#fff"; g.font="800 62px system-ui,sans-serif"; g.fillText("L'Atelier Volt",70,120);
+  g.font="700 70px system-ui,sans-serif"; g.fillText("Mon bilan "+y,70,300);
+  g.font="800 260px system-ui,sans-serif"; const kt=String(Math.round(km)); g.fillText(kt,70,600); const kw=g.measureText(kt).width; g.font="600 70px system-ui,sans-serif"; g.fillText("km",70+kw+30,600);
+  g.font="600 54px system-ui,sans-serif"; g.fillStyle="#d6d9ff";
+  [rs.length+" sorties",(longest?"Plus longue sortie : "+longest.toFixed(1)+" km":""),(km?"Mois le plus actif : "+mn:""),(eur?Math.round(eur)+" € d'entretien, "+ls.length+" interventions":""),(best?"Meilleure série : "+best+" semaines":"")].filter(Boolean).forEach((t,i)=>g.fillText(t,70,760+i*95));
+  shareCanvas(c,"bilan-"+y+".png");
+ };
+}
+function vLicences(){
+ const R=[["OpenStreetMap","Données cartographiques © contributeurs OpenStreetMap, licence ODbL (openstreetmap.org/copyright). Fonds de carte fournis par l'OpenStreetMap Foundation."],["Leaflet","Bibliothèque de cartes, licence BSD 2-Clause."],["jsPDF","Génération de PDF, licence MIT."],["Supabase (supabase-js)","Comptes et base de données, licence MIT."],["Photon (Komoot)","Suggestions d'adresses, données OpenStreetMap."],["FOSSGIS / OSRM","Calcul d'itinéraires, moteur OSRM (licence BSD 2-Clause), données OpenStreetMap."],["Open-Meteo","Données météo, licence CC BY 4.0 (open-meteo.com)."],["Overpass API","Lieux utiles, données OpenStreetMap (ODbL)."],["Space Grotesk","Police de caractères, licence SIL Open Font License 1.1."]];
+ $("#app").innerHTML=LEG(`<h1>Licences et crédits</h1><p><b>L'Atelier Volt</b> : © 2026 L'Atelier Volt. Tous droits réservés. Le code, les textes, le logo et la charte graphique ne peuvent être copiés, modifiés ni réutilisés sans autorisation écrite de l'éditeur.</p><h3>Composants et services tiers</h3><ul>${R.map(([n,t])=>`<li><b>${n}</b> : ${t}</li>`).join("")}</ul><p class="mute">Les marques citées appartiennent à leurs propriétaires. Ce service n'est affilié à aucune d'elles.</p>`);
+}
+
+/* ====== Double authentification, messages de l'administration ====== */
+function vMfa(){
+ $("#app").innerHTML=`<div class="authc"><div class="card"><div class="mark">${LOGO(44)}</div><h1>Double authentification</h1><p class="mute">Saisis le code à 6 chiffres de ton application d'authentification.</p><input id="mfc" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><div class="btnrow"><button id="mfv">Valider</button><button class="sec" id="mfo">Me déconnecter</button></div></div></div>`;
+ $("#mfo").onclick=()=>sb.auth.signOut();
+ $("#mfv").onclick=async()=>{const {data}=await sb.auth.mfa.listFactors(), f=((data||{}).totp||[]).find(x=>x.status==="verified"); if(!f) return toast("Aucun facteur trouvé.");
+  const r=await sb.auth.mfa.challengeAndVerify({factorId:f.id,code:$("#mfc").value.trim()}); if(r.error) return toast("Code invalide."); aalOK="ok"; route()};
+}
+async function mfaRender(){
+ const box=document.getElementById("mfac"); if(!box) return; if(!sb.auth.mfa||!sb.auth.mfa.listFactors){box.remove(); return}
+ const {data}=await sb.auth.mfa.listFactors(), f=((data||{}).totp||[]).find(x=>x.status==="verified");
+ if(f){box.innerHTML=`<h3>Double authentification</h3><p class="mute">Activée : un code de ton application est demandé à chaque connexion.</p><button class="sec" id="mfd">Désactiver</button>`;
+  $("#mfd").onclick=async()=>{const {error}=await sb.auth.mfa.unenroll({factorId:f.id}); toast(error?"Désactivation impossible : "+error.message:"Double authentification désactivée."); if(!error){aalOK=null; mfaRender()}}; return}
+ box.innerHTML=`<h3>Double authentification</h3><p class="mute">Protège ton compte avec une application d'authentification (Google Authenticator, Authy, 1Password…).</p><button id="mfe">Activer</button>`;
+ $("#mfe").onclick=async()=>{const {data:d,error}=await sb.auth.mfa.enroll({factorType:"totp",friendlyName:"Atelier Volt "+Date.now()}); if(error) return toast("Erreur : "+error.message);
+  box.innerHTML=`<h3>Double authentification</h3><p>1. Scanne ce QR code avec ton application.</p><img src="${d.totp.qr_code}" alt="QR code" style="width:200px;max-width:100%;background:#fff;border-radius:12px;padding:8px"><p class="mute">Ou saisis ce code : <b style="word-break:break-all">${esc(d.totp.secret)}</b></p><p>2. Saisis le code à 6 chiffres affiché.</p><input id="mfc" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><button id="mfv">Valider</button>`;
+  $("#mfv").onclick=async()=>{const r=await sb.auth.mfa.challengeAndVerify({factorId:d.id,code:$("#mfc").value.trim()}); if(r.error) return toast("Code invalide."); toast("Double authentification activée."); aalOK="ok"; mfaRender()}};
+}
+const KINDS={notice:"Rappel à l'ordre",warning:"Avertissement",final_warning:"Dernier avertissement",suspension:"Suspension",unsuspension:"Suspension levée",message:"Message"};
+const noticesCard = () => sanc.length?`<div class="card"><h3>Messages de l'administration</h3>${sanc.slice(0,10).map(s=>`<div class="mute" style="margin-top:.6rem"><b>${esc(KINDS[s.kind]||s.kind)}</b>, ${new Date(s.created_at).toLocaleDateString("fr-FR")}<br>${esc((s.subject?s.subject+" : ":"")+(s.reason||""))}</div>`).join("")}</div>`:"";
+function showNotices(){
+ const pend=sanc.filter(x=>!x.ack_at&&["notice","warning","final_warning","message"].includes(x.kind)); if(!pend.length||document.getElementById("snm")) return;
+ const s=pend[0], m=sheet("snm",`<h2>${esc(KINDS[s.kind])}</h2>${s.subject?`<p><b>${esc(s.subject)}</b></p>`:""}<p style="white-space:pre-wrap">${esc(s.reason||"")}</p>${s.kind==="final_warning"?`<p class="mute">Un nouveau manquement pourra entraîner la suspension de ton compte.</p>`:""}<p class="mute">Pour répondre ou contester : ${esc(EDITEUR.email)}</p><button id="snY">J'ai lu</button>`);
+ m.addEventListener("click",e=>{if(e.target===m) e.stopImmediatePropagation()},true);
+ $("#snY").onclick=async()=>{await sb.rpc("ack_sanction",{p_id:s.id}); s.ack_at=new Date().toISOString(); m.remove(); showNotices()};
+}
+
+/* ====== Panneau d'administration ====== */
+async function adminCall(body){
+ const {data,error}=await sb.functions.invoke("admin-actions",{body});
+ if(error){let msg=error.message; try{const j=await error.context.json(); msg=j.error||msg}catch(e){} throw new Error(msg)}
+ if(data&&data.error) throw new Error(data.error); return data;
+}
+const rpcT = async (n,a) => {const {data,error}=await sb.rpc(n,a); if(error) throw new Error(error.message); return data};
+async function vAdmin(){
+ if(!myRole){$("#app").innerHTML=`<h1>Administration</h1><p class="mute">Accès réservé.</p>`; return}
+ const a=sb.auth.mfa?await sb.auth.mfa.getAuthenticatorAssuranceLevel():null;
+ if(!a||!a.data||a.data.currentLevel!=="aal2"){$("#app").innerHTML=`<h1>Administration</h1><div class="card"><p>L'administration exige la double authentification. Active-la dans <a href="#/compte">Compte</a>, puis reconnecte-toi et saisis ton code.</p></div>`; return}
+ const S=myRole==="super", ok=async f=>{try{await f()}catch(e){toast(e.message)}};
+ $("#app").innerHTML=`<h1>Administration</h1><div class="stats" id="adst"></div><div class="card"><h2>Utilisateurs</h2><div class="row"><input id="adq" placeholder="Pseudo ou email"><button id="adgo" style="margin:0;flex:0 0 auto">Chercher</button></div><div id="adu"></div></div><div id="adr"></div>${S?`<div class="card"><h2>Modérateurs</h2><div id="adm"></div><div class="row" style="margin-top:.6rem"><input id="amn" placeholder="Pseudo à nommer modérateur"><button id="amg" style="margin:0;flex:0 0 auto">Ajouter</button></div></div>`:""}
+ <div class="card"><h2>Annonce pour tous</h2><textarea id="ann" rows="2" maxlength="300"></textarea><div class="btnrow"><button id="annp">Publier</button><button class="sec" id="annc">Retirer</button></div></div><div class="card"><h2>Journal</h2><div id="adj"></div></div>`;
+ const stats=()=>ok(async()=>{const s=await rpcT("admin_stats"); $("#adst").innerHTML=[["users","utilisateurs"],["new7","nouveaux (7 j)"],["rides","sorties"],["groups","classements"],["reports","signalements ouverts"]].map(([k,l])=>`<div class="card stat"><b>${s[k]}</b>${l}</div>`).join("")});
+ const users=()=>ok(async()=>{const U=await rpcT("admin_users",{q:$("#adq").value.trim()});
+  $("#adu").innerHTML=(U||[]).map(u=>{const bn=u.banned_until&&new Date(u.banned_until)>new Date(); return `<div class="card" style="margin:.7rem 0 0"><b>${esc(u.username||"(sans pseudo)")}</b>${bn?` <span class="tag late">Suspendu</span>`:""}<div class="mute">${esc(u.email||"")}<br>Inscrit le ${new Date(u.created_at).toLocaleDateString("fr-FR")}, ${u.rides} sortie${u.rides>1?"s":""}, ${u.sanctions} sanction${u.sanctions>1?"s":""}</div><div class="btnrow"><button class="sec" data-ua="warn|${u.id}">Avertir</button><button class="sec" data-ua="msg|${u.id}">Message</button><button class="sec" data-ua="pseudo|${u.id}">Retirer le pseudo</button>${S?(bn?`<button class="sec" data-ua="unban|${u.id}">Lever</button>`:`<button class="sec" data-ua="susp|${u.id}">Suspendre</button>`)+`<button class="danger" data-ua="del|${u.id}">Supprimer</button>`:""}</div></div>`}).join("")||`<p class="mute">Aucun résultat.</p>`;
+  document.querySelectorAll("[data-ua]").forEach(b=>b.onclick=()=>{const [t,id]=b.dataset.ua.split("|"); adAct(t,id)})});
+ const reports=()=>ok(async()=>{const R=await rpcT("admin_reports");
+  $("#adr").innerHTML=`<div class="card"><h2>Signalements</h2>${(R||[]).map(r=>`<div class="card" style="margin:.7rem 0 0;${r.status==="resolved"?"opacity:.55":""}"><span class="tag ${r.status==="open"?"late":"neutral"}">${r.status==="open"?"Ouvert":"Traité"}</span> <b>${r.target_type==="group"?"Classement":"Pseudo"} : ${esc(r.target_label)}</b><div class="mute">${esc(r.reason)}${r.details?" : "+esc(r.details):""}<br>Signalé par ${esc(r.reporter||"?")} le ${new Date(r.created_at).toLocaleDateString("fr-FR")}${r.note?"<br>Note : "+esc(r.note):""}</div>${r.status==="open"?`<div class="btnrow">${r.target_type==="group"&&r.target_id?`<button class="danger" data-rg="${r.target_id}">Supprimer le classement</button>`:""}${r.target_type==="user"?`<button class="sec" data-rs="${esc(r.target_label)}">Voir l'utilisateur</button>`:""}<button class="sec" data-rr="${r.id}">Marquer traité</button></div>`:""}</div>`).join("")||`<p class="mute">Aucun signalement.</p>`}</div>`;
+  document.querySelectorAll("[data-rg]").forEach(b=>b.onclick=()=>{if(confirm("Supprimer ce classement ?")) ok(async()=>{await rpcT("admin_delete_group",{p_gid:b.dataset.rg}); toast("Classement supprimé."); reports(); stats()})});
+  document.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{$("#adq").value=b.dataset.rs; users(); $("#adu").scrollIntoView({block:"center"})});
+  document.querySelectorAll("[data-rr]").forEach(b=>b.onclick=()=>{const n=prompt("Note (facultatif) :")||""; ok(async()=>{await rpcT("admin_resolve_report",{p_id:b.dataset.rr,p_note:n}); reports(); stats()})})});
+ const admins=()=>S&&ok(async()=>{const A=await rpcT("admin_list_admins"); $("#adm").innerHTML=(A||[]).map(x=>`<div class="row" style="align-items:center"><span>${esc(x.username||"?")} <span class="mute">(${x.role==="super"?"super admin":"modérateur"})</span></span>${x.role==="mod"?`<div style="flex:0 0 auto"><button class="sec" data-ar="${esc(x.username)}" style="margin:0">Retirer</button></div>`:""}</div>`).join(""); document.querySelectorAll("[data-ar]").forEach(b=>b.onclick=()=>ok(async()=>{await rpcT("admin_set_role",{p_username:b.dataset.ar,p_role:"none"}); admins()}))});
+ const log=()=>ok(async()=>{const J=await rpcT("admin_sanctions"); $("#adj").innerHTML=(J||[]).map(s=>`<div class="mute" style="margin-top:.5rem"><b>${esc(KINDS[s.kind]||s.kind)}</b> : ${esc(s.username||"?")}, ${new Date(s.created_at).toLocaleDateString("fr-FR")}<br>${esc((s.subject?s.subject+" : ":"")+(s.reason||""))}</div>`).join("")||`<p class="mute">Rien pour l'instant.</p>`});
+ const adAct=(t,id)=>{
+  if(t==="pseudo"){if(confirm("Retirer le pseudo de cet utilisateur ?")) ok(async()=>{await rpcT("admin_clear_username",{p_uid:id}); toast("Pseudo retiré."); users()}); return}
+  if(t==="unban"){if(confirm("Lever la suspension ?")) ok(async()=>{await adminCall({action:"unsuspend",user_id:id}); toast("Suspension levée."); users(); log()}); return}
+  if(t==="del"){if(prompt("Supprimer définitivement ce compte et ses données ? Tape SUPPRIMER pour confirmer.")==="SUPPRIMER") ok(async()=>{await adminCall({action:"delete_user",user_id:id}); toast("Compte supprimé."); users(); stats()}); return}
+  const forms={warn:`<h2>Avertir</h2><label for="af">Niveau</label><select id="af"><option value="notice">Rappel à l'ordre</option><option value="warning" selected>Avertissement</option><option value="final_warning">Dernier avertissement</option></select><label for="ar">Raison (envoyée à l'utilisateur)</label><textarea id="ar" rows="4"></textarea><label class="chk"><input id="ae" type="checkbox" checked><span>Envoyer aussi par email</span></label>`,
+   msg:`<h2>Message</h2><label for="as">Sujet</label><input id="as" maxlength="100"><label for="ar">Message</label><textarea id="ar" rows="5"></textarea><p class="mute">Envoyé par email et affiché dans l'appli.</p>`,
+   susp:`<h2>Suspendre</h2><label for="ad">Durée</label><select id="ad"><option value="1">24 heures</option><option value="7">7 jours</option><option value="30">30 jours</option><option value="">Définitive</option></select><label for="ar">Raison (envoyée par email)</label><textarea id="ar" rows="4"></textarea>`}[t];
+  const m=sheet("adf",forms+`<div class="btnrow"><button id="ay">Envoyer</button><button class="sec" id="an">Annuler</button></div>`);
+  $("#an").onclick=()=>m.remove();
+  $("#ay").onclick=()=>ok(async()=>{const reason=$("#ar").value.trim(); let b;
+   if(t==="warn") b={action:"warn",user_id:id,kind:$("#af").value,reason,email:$("#ae").checked};
+   else if(t==="msg") b={action:"message",user_id:id,subject:$("#as").value.trim(),reason};
+   else b={action:"suspend",user_id:id,days:$("#ad").value||null,reason};
+   const r=await adminCall(b); m.remove(); toast(r.mailed===false?"Enregistré (email non envoyé).":"Envoyé."); users(); log()});
+ };
+ $("#adgo").onclick=users; $("#adq").onkeydown=e=>{if(e.key==="Enter") users()};
+ if(S) $("#amg").onclick=()=>ok(async()=>{await rpcT("admin_set_role",{p_username:$("#amn").value.trim(),p_role:"mod"}); $("#amn").value=""; toast("Modérateur ajouté."); admins()});
+ $("#annp").onclick=()=>ok(async()=>{await rpcT("admin_set_announcement",{p_body:$("#ann").value,p_active:true}); toast("Annonce publiée.")});
+ $("#annc").onclick=()=>ok(async()=>{await rpcT("admin_set_announcement",{p_body:"",p_active:false}); toast("Annonce retirée.")});
+ stats(); users(); reports(); admins(); log();
 }
 
 /* ====== Plus, batterie, badges, fiche de revente, PDF ====== */
 function vPlus(){
- $("#app").innerHTML=`<h1>Plus</h1>`+[["trottinettes","Mes trottinettes","Modèle, kilométrage, assurance, carnet PDF"],["rappels","Rappels d'entretien","Ce qui est à faire, avec ajout au calendrier"],["batterie","Batterie","Suivi de ton autonomie"],["badges","Badges","Tes réussites"],["guides","Guides","Fiches pratiques"],["compte","Compte","Pseudo, rappels par email, passkey, données"]].map(([h,t,d])=>`<a href="#/${h}" style="text-decoration:none;color:inherit"><div class="card"><h3>${t}</h3><div class="mute">${d}</div></div></a>`).join("");
+ $("#app").innerHTML=`<h1>Plus</h1>`+[["trottinettes","Mes trottinettes","Modèle, kilométrage, assurance, carnet PDF"],["rappels","Rappels d'entretien","Ce qui est à faire, avec ajout au calendrier"],["batterie","Batterie","Suivi de ton autonomie"],["badges","Badges","Tes réussites"],["bilan","Bilan de l'année","Tes statistiques et une image à partager"],["guides","Guides","Fiches pratiques"],["compte","Compte","Pseudo, rappels par email, passkey, données"]].concat(myRole?[["admin","Administration","Modération et utilisateurs"]]:[]).map(([h,t,d])=>`<a href="#/${h}" style="text-decoration:none;color:inherit"><div class="card"><h3>${t}</h3><div class="mute">${d}</div></div></a>`).join("");
 }
 const batEst = b => b.km*100/(b.pct_start-b.pct_end);
 function vBattery(){
@@ -828,7 +1092,7 @@ function vBattery(){
 function badgeList(){
  const km=scooters.reduce((a,s)=>a+s.km,0), longest=Math.max(0,...rides.map(r=>+r.km)), gps=rides.filter(r=>r.source==="gps").length;
  const ok=scooters.length>0&&logs.length>0&&scooters.every(s=>calc(s).every(x=>x.r<1));
- return [["Première sortie",rides.length>=1,"Enregistre ta première sortie"],["100 km",km>=100,"Atteins 100 km au compteur"],["500 km",km>=500,"Atteins 500 km"],["1 000 km",km>=1000,"Atteins 1 000 km"],["Sortie de 20 km",longest>=20,"Fais une sortie de 20 km"],["5 sorties GPS",gps>=5,"Suis 5 sorties au GPS"],["Premier entretien",logs.length>=1,"Note ta première intervention"],["10 interventions",logs.length>=10,"Note 10 interventions"],["Entretien à jour",ok,"Aucun rappel en retard"],["Assurance à jour",scooters.length>0&&scooters.every(s=>ins(s)[0]==="fine"),"Renseigne une assurance valide"],["Batterie suivie",bat.length>=3,"Note 3 mesures de batterie"]];
+ return [["Première sortie",rides.length>=1,"Enregistre ta première sortie"],["100 km",km>=100,"Atteins 100 km au compteur"],["500 km",km>=500,"Atteins 500 km"],["1 000 km",km>=1000,"Atteins 1 000 km"],["Sortie de 20 km",longest>=20,"Fais une sortie de 20 km"],["5 sorties GPS",gps>=5,"Suis 5 sorties au GPS"],["Premier entretien",logs.length>=1,"Note ta première intervention"],["10 interventions",logs.length>=10,"Note 10 interventions"],["Entretien à jour",ok,"Aucun rappel en retard"],["Assurance à jour",scooters.length>0&&scooters.every(s=>ins(s)[0]==="fine"),"Renseigne une assurance valide"],["Série de 4 semaines",streakInfo().best>=4,"Roule 4 semaines d'affilée"],["Objectif atteint",goals.some(g=>monthKm(g.month)>=g.km_goal),"Atteins ton objectif mensuel"],["Batterie suivie",bat.length>=3,"Note 3 mesures de batterie"]];
 }
 const badgeCard = () => {const b=badgeList(), n=b.filter(x=>x[1]).length; return `<a href="#/badges" style="text-decoration:none;color:inherit"><div class="card"><h3>Badges</h3><div class="mute">${n} sur ${b.length} obtenus</div></div></a>`};
 function vBadges(){
@@ -877,12 +1141,14 @@ function askInstall(){
 function vAccount(){
  $("#app").innerHTML=`<h1>Compte</h1><div class="card"><p>Connecté : <b>${esc(user.email)}</b></p>
  <label for="un">Pseudo (3 à 20 caractères : lettres, chiffres, _)</label><input id="un" maxlength="20" autocomplete="nickname" value="${esc((profile||{}).username||"")}"><button id="su">Enregistrer le pseudo</button></div>
+ ${noticesCard()}<div class="card" id="mfac"></div>
  <div class="card"><label class="chk"><input id="er" type="checkbox" ${(profile||{}).email_reminders?"checked":""}><span>Recevoir mes rappels d'entretien par email : 1 par semaine au maximum, seulement s'il y a quelque chose à faire. Je peux me désinscrire à tout moment.</span></label></div>
  <div class="card"><button id="pk">Ajouter une clé d'accès</button><button class="sec" id="ex">Télécharger mes données</button><button class="danger" id="del">Supprimer mon compte</button>
  <p class="mute">Une clé d'accès (empreinte, visage ou code de ton appareil) te permet de te connecter sans mot de passe. La suppression efface définitivement ton compte et toutes tes données.</p></div>`;
  $("#su").onclick=async()=>{const u=$("#un").value.trim(); if(!/^[A-Za-z0-9_]{3,20}$/.test(u)) return toast("Pseudo invalide (3 à 20 lettres, chiffres ou _).");
   const {error}=await sb.from("profiles").upsert({id:user.id,username:u,public_ranking:!!(profile&&profile.public_ranking)});
-  toast(error?(error.code==="23505"?"Ce pseudo est déjà pris.":"Erreur : "+error.message):"Pseudo enregistré."); if(!error) route()};
+  toast(error?pe(error):"Pseudo enregistré."); if(!error) route()};
+ mfaRender();
  $("#er").onchange=async()=>{if(!profile||!profile.username) return; const {error}=await sb.from("profiles").upsert({id:user.id,username:profile.username,public_ranking:!!profile.public_ranking,email_reminders:$("#er").checked}); if(error){toast("Erreur : "+error.message); $("#er").checked=!$("#er").checked}else{profile.email_reminders=$("#er").checked; toast($("#er").checked?"Rappels par email activés.":"Rappels par email désactivés.")}};
  $("#pk").onclick=async()=>{if(!sb.auth.registerPasskey) return toast("Clés d'accès indisponibles."); const {error}=await sb.auth.registerPasskey(); toast(error?"Clé d'accès : "+error.message:"Clé d'accès ajoutée.")};
  $("#ex").onclick=()=>{const b=new Blob([JSON.stringify({email:user.email,profil:profile,scooters,logs,rides},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="mes-donnees.json";a.click()};
@@ -895,7 +1161,7 @@ const LEG = t => `<div class="card legal"><p><a href="#" onclick="history.back()
 const E = () => `${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}`;
 const vMentions = () => $("#app").innerHTML = LEG(`<h1>Mentions légales</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
 <h3>1. Éditeur du site</h3><p>${N} est édité à titre non professionnel par ${esc(EDITEUR.nom)}, joignable à ${esc(EDITEUR.email)}. Conformément à l'article 6, III, 2° de la loi n° 2004-575 du 21 juin 2004 (LCEN), l'éditeur a communiqué son identité complète à l'hébergeur ; l'adresse postale indiquée est celle de l'hébergeur : ${esc(EDITEUR.adresse)}. Directeur de la publication : ${esc(EDITEUR.nom)}. Le site est un projet gratuit et non commercial.</p>
-<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : West EU (Irlande), dans l'Union européenne.</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL). Les fonds de carte sont chargés depuis les serveurs de l'OpenStreetMap Foundation (Royaume-Uni).</li><li><b>Envoi d'emails</b> (messages du compte et rappels) : MailerSend, société du groupe MailerLite, Union européenne.</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
+<h3>2. Hébergement et prestataires techniques</h3><ul><li><b>Site web</b> : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis (vercel.com).</li><li><b>Base de données, comptes utilisateurs et emails de service</b> : Supabase Inc., 970 Toa Payoh North #07-04, Singapour 318992 (supabase.com). Région de stockage choisie : West EU (Irlande), dans l'Union européenne.</li><li><b>Bibliothèque logicielle</b> : distribuée par le réseau jsDelivr (jsdelivr.com).</li><li><b>Cartographie et itinéraires</b> (fonction facultative) : Komoot GmbH, Allemagne (suggestions d'adresses, service Photon) et FOSSGIS e.V., Allemagne (calcul d'itinéraires). Les données cartographiques proviennent d'OpenStreetMap (© contributeurs OpenStreetMap, licence ODbL). Les fonds de carte sont chargés depuis les serveurs de l'OpenStreetMap Foundation (Royaume-Uni).</li><li><b>Envoi d'emails</b> (messages du compte et rappels) : MailerSend, société du groupe MailerLite, Union européenne.</li><li><b>Météo et lieux utiles</b> (fonctions facultatives) : Open-Meteo (open-meteo.com) et l'API Overpass (overpass-api.de), à partir de données OpenStreetMap.</li><li><b>Connexion avec Google</b> (facultative) : Google Ireland Limited, Irlande.</li></ul>
 <h3>3. Contact</h3><p>Par email : ${esc(EDITEUR.email)}. Nous répondons en français, en principe sous 7 jours ouvrés.</p>
 <h3>4. Signalement de contenus illicites</h3><p>Tu peux signaler un contenu que tu estimes illicite en écrivant à l'adresse ci-dessus, en indiquant : la page concernée, une description du contenu, les raisons pour lesquelles il est illicite, ton nom et ton adresse email. Ce point de contact unique est aussi destiné aux autorités des États membres (règlement (UE) 2022/2065, dit « DSA »). Les contenus saisis par les utilisateurs sont privés et visibles uniquement de leur auteur, sauf le pseudo et les totaux de ceux qui ont choisi d'apparaître aux classements.</p>
 <h3>5. Propriété intellectuelle</h3><p>Le code, la structure, les textes, le logo et la charte graphique de ${N} sont protégés par le droit d'auteur. Toute reproduction ou réutilisation sans autorisation écrite est interdite. Les noms de marques et de modèles cités appartiennent à leurs titulaires, ne sont employés que pour identifier les produits, et n'impliquent aucun partenariat ni affiliation.</p>
@@ -917,6 +1183,7 @@ const vCgu = () => $("#app").innerHTML = LEG(`<h1>Conditions générales d'utili
 <h3>8 quater. Itinéraires</h3><p>Les itinéraires proposés sont générés automatiquement à partir de données OpenStreetMap et d'un calcul prévu pour le vélo. Ils peuvent comporter des erreurs, passer par des voies interdites ou dangereuses pour une trottinette, ou être indisponibles. Tu restes seul responsable du trajet que tu empruntes, de ta vigilance et du respect du Code de la route. L'estimation de consommation de batterie est indicative.</p>
 <h3>8 quinquies. Navigation, calendrier et rappels</h3><p>La navigation est une aide : elle ne remplace ni ta vigilance, ni la signalisation, ni le Code de la route. Fixe ton téléphone avec un support et ne le manipule jamais en roulant. Les instructions et les itinéraires peuvent être inexacts ou inadaptés aux trottinettes. L'écran doit rester allumé et la page ouverte au premier plan ; le suivi peut s'interrompre sans que l'Éditeur puisse le garantir. Les événements de calendrier sont ajoutés une seule fois et ne se mettent pas à jour ; les rappels par email sont facultatifs et peuvent comporter des retards ou des erreurs.</p>
 <h3>8 sexies. Carnet PDF et fiche de revente</h3><p>Le carnet en PDF et la fiche de revente sont établis à partir des informations que tu as saisies. Ils ne constituent ni un certificat ni une garantie de l'état de la trottinette. Tu es seul responsable de l'exactitude des annonces que tu publies.</p>
+<h3>8 septies. Classements privés, signalements et modération</h3><p>Tu peux créer ou rejoindre des classements privés (5 au maximum par personne, 50 membres par classement). Le nom d'un classement doit respecter les mêmes règles que les pseudos ; le créateur peut retirer un membre, désactiver ou renouveler le lien d'invitation et supprimer le classement. En rejoignant un classement, tu acceptes que ton pseudo et tes totaux de km soient visibles de ses membres. Tu peux signaler un pseudo ou un nom de classement depuis les classements. L'Éditeur peut, en cas de manquement aux CGU ou de contenu illicite, retirer un contenu, adresser un rappel à l'ordre ou un avertissement, suspendre temporairement ou définitivement un compte, ou le supprimer. Sauf urgence ou obligation légale, la raison de la décision t'est communiquée dans l'appli et par email ; tu peux la contester en écrivant à l'adresse de contact, et ta demande sera examinée par une personne. L'Éditeur peut aussi t'écrire pour des raisons liées à ton compte ou au fonctionnement du service.</p>
 <h3>9. Informations indicatives et sécurité</h3><p>Les intervalles d'entretien, tâches, guides, rappels, listes de modèles et suivi de l'assurance sont fournis <b>à titre indicatif</b> ; ils peuvent contenir des erreurs ou être incomplets, et ne remplacent ni le manuel du constructeur, ni l'avis d'un professionnel, ni tes obligations légales. L'entretien des freins, de la batterie, des fixations et des pneus touche à ta sécurité : en cas de doute, adresse-toi à un réparateur qualifié. Tu es seul responsable de l'état de ta trottinette, de la souscription d'une assurance de responsabilité civile et du respect du Code de la route et de la réglementation applicable aux engins de déplacement personnel motorisés.</p>
 <h3>10. Responsabilité</h3><p>L'Éditeur est tenu à une obligation de moyens. Il n'est pas responsable des dommages résultant d'une interprétation des informations du service, d'une intervention ou d'une absence d'intervention sur ta trottinette, d'une perte de données, d'une interruption du service ou d'un événement indépendant de sa volonté (force majeure, panne des prestataires, attaque informatique malgré les mesures de sécurité raisonnables), sauf faute lourde ou dolosive. Rien dans ces CGU n'exclut ni ne limite une responsabilité qui ne peut l'être en droit, notamment en cas de dommage corporel, ou les droits dont tu disposes en tant que consommateur.</p>
 <h3>11. Disponibilité et évolution du service</h3><p>Le service est fourni « en l'état », sans garantie de disponibilité continue. Des interruptions peuvent avoir lieu pour maintenance. L'Éditeur peut faire évoluer, suspendre ou arrêter le service ; en cas d'arrêt définitif, il t'en informe au moins 30 jours à l'avance et te permet d'exporter tes données.</p>
@@ -941,11 +1208,17 @@ const vPriv = () => $("#app").innerHTML = LEG(`<h1>Politique de confidentialité
 <li><b>Batterie</b> : date, distance et niveaux de batterie que tu saisis. Finalité : estimer ton autonomie. Base légale : exécution du contrat. Durée : jusqu'à suppression par toi ou du compte.</li>
 <li><b>Rappels par email</b> (facultatif) : ton adresse email et l'état de tes rappels (entretiens en retard, assurance), au maximum une fois par semaine, via MailerSend. Base légale : ton consentement (case à cocher dans Compte), que tu peux retirer à tout moment en la décochant ou via le lien de désinscription présent dans chaque email.</li>
 <li><b>Calendrier</b> (facultatif) : le fichier d'événement est créé sur ton appareil ; en choisissant Google Agenda, les informations de l'événement sont transmises à Google uniquement à ce moment-là.</li>
+<li><b>Météo et lieux utiles</b> (facultatif) : la météo est demandée à Open-Meteo pour le lieu de départ de l'itinéraire (coordonnées arrondies) ; les lieux utiles sont demandés à l'API Overpass pour la zone affichée sur la carte. Ces services reçoivent aussi ton adresse IP. Base légale : ton consentement (case à cocher dans le générateur d'itinéraire, fenêtre d'accord pour les lieux utiles). Nous ne conservons pas ces réponses.</li>
+<li><b>Objectif du mois et série</b> : l'objectif en km que tu choisis, et ta série de semaines roulées, calculée à partir de tes sorties. Finalité : te motiver. Base légale : exécution du contrat. Durée : jusqu'à suppression par toi ou du compte.</li>
+<li><b>Classements privés</b> (facultatif) : le nom des classements que tu crées ou rejoins, ton appartenance à ces classements et, pour leurs membres, ton pseudo, tes km du mois, tes km totaux et ton nombre de sorties. Base légale : ton consentement (case cochée en rejoignant), retirable à tout moment en quittant le classement. Durée : jusqu'à ce que tu quittes le classement ou que celui-ci soit supprimé.</li>
+<li><b>Signalements, avertissements et sanctions</b> : les signalements que tu envoies (motif, détails, ton identifiant) et, si tu es concerné, les messages, avertissements ou suspensions de l'administration avec leur motif. Finalité : modération et sécurité du service. Base légale : intérêt légitime et obligations légales. Durée : 24 mois, ou 5 ans pour une suspension définitive (preuve en cas de litige).</li>
+<li><b>Administration</b> : le ou les administrateurs peuvent consulter, pour la modération, les pseudos, adresses email, dates d'inscription et de connexion et le nombre de sorties des comptes. Leurs actions sont tracées.</li>
+<li><b>Double authentification</b> (facultative) : un secret de génération de codes est stocké par Supabase pour vérifier tes codes. Base légale : exécution du contrat.</li>
 <li><b>Autres modes de connexion</b> (facultatifs) : avec Google, nous recevons ton email et un identifiant ; avec une clé d'accès, seule une clé publique est stockée par Supabase, ni ta biométrie ni ta clé privée ne quittent ton appareil. Base légale : exécution du contrat.</li>
 <li><b>Emails de service</b> (confirmation d'inscription, réinitialisation de mot de passe, information sur les CGU) : strictement transactionnels, jamais de prospection. Base légale : exécution du contrat et obligation d'information.</li>
 <li><b>Demandes de contact</b> : ton message et ton email, pour y répondre. Base légale : intérêt légitime. Durée : 12 mois après le dernier échange.</li></ul>
 <p>Les données du compte et du carnet sont nécessaires pour utiliser le service : sans elles, il ne peut pas fonctionner. Aucune donnée n'est vendue, louée ni utilisée pour de la publicité ou du profilage. Aucune décision automatisée produisant des effets juridiques n'est prise. Le service ne lit ta position que pendant un suivi GPS ou une demande « Utiliser ma position » que tu lances, et ne collecte ni données de santé ni photos. Les données de localisation étant sensibles, nous te conseillons de masquer le début et la fin de tes tracés.</p>
-<h3>3. Destinataires et sous-traitants</h3><ul><li><b>Supabase Inc.</b> : authentification, base de données, envoi d'emails de service.</li><li><b>Vercel Inc.</b> : hébergement et diffusion du site.</li><li><b>jsDelivr</b> : diffusion d'une bibliothèque logicielle, ce qui implique que ton adresse IP leur soit transmise lors du chargement de la page.</li><li><b>Komoot (Photon), FOSSGIS e.V. et OpenStreetMap Foundation</b> : uniquement si tu utilises les itinéraires, la navigation ou les cartes. <b>Google</b> : uniquement si tu choisis de te connecter avec Google ou d'ajouter un événement à Google Agenda. <b>MailerSend</b> : envoi des emails du compte et, si tu les as activés, des rappels.</li></ul><p>Ils agissent dans le cadre de contrats de sous-traitance. Tes données ne sont accessibles qu'à l'Éditeur et à ces prestataires. Elles peuvent être communiquées aux autorités sur réquisition légale.</p>
+<h3>3. Destinataires et sous-traitants</h3><ul><li><b>Supabase Inc.</b> : authentification, base de données, envoi d'emails de service.</li><li><b>Vercel Inc.</b> : hébergement et diffusion du site.</li><li><b>jsDelivr</b> : diffusion d'une bibliothèque logicielle, ce qui implique que ton adresse IP leur soit transmise lors du chargement de la page.</li><li><b>Komoot (Photon), FOSSGIS e.V. et OpenStreetMap Foundation</b> : uniquement si tu utilises les itinéraires, la navigation ou les cartes. <b>Google</b> : uniquement si tu choisis de te connecter avec Google ou d'ajouter un événement à Google Agenda. <b>MailerSend</b> : envoi des emails du compte, des messages de l'administration et, si tu les as activés, des rappels. <b>Open-Meteo</b> et <b>Overpass API</b> : uniquement si tu utilises la météo ou les lieux utiles.</li></ul><p>Ils agissent dans le cadre de contrats de sous-traitance. Tes données ne sont accessibles qu'à l'Éditeur et à ces prestataires. Elles peuvent être communiquées aux autorités sur réquisition légale.</p>
 <h3>4. Transferts hors de l'Union européenne</h3><p>Certains prestataires peuvent traiter des données hors de l'Union européenne, notamment aux États-Unis. Ces transferts reposent sur une décision d'adéquation de la Commission européenne (cadre de protection des données UE–États-Unis) ou sur les clauses contractuelles types, complétées de mesures de sécurité. Tu peux obtenir une copie des garanties applicables en écrivant à l'Éditeur.</p>
 <h3>5. Sécurité</h3><p>Connexion chiffrée (HTTPS), mots de passe hachés, et cloisonnement des données au niveau de la base : chaque compte ne peut lire et modifier que ses propres données. En cas de violation de données présentant un risque, l'Éditeur la notifie à la CNIL dans les 72 heures et t'en informe sans délai si le risque est élevé.</p>
 <h3>6. Tes droits</h3><p>Tu disposes des droits : d'accès, de rectification, d'effacement, de limitation, d'opposition (pour les traitements fondés sur l'intérêt légitime), de portabilité, de retrait de ton consentement le cas échéant, et de définir des directives sur le sort de tes données après ton décès.</p>
@@ -955,7 +1228,7 @@ const vPriv = () => $("#app").innerHTML = LEG(`<h1>Politique de confidentialité
 <h3>8. Cookies et traceurs</h3><p>Voir la <a href="#/cookies">politique relative aux cookies</a>.</p>
 <h3>9. Modifications</h3><p>Cette politique peut évoluer. Toute modification importante est signalée aux utilisateurs inscrits. La date de dernière mise à jour figure en haut de la page.</p>`);
 const vCookies = () => $("#app").innerHTML = LEG(`<h1>Cookies et stockage local</h1><p class="mute">Dernière mise à jour : 10 octobre 2026</p>
-<h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Sauvegarde du suivi GPS</b> : la sortie en cours est enregistrée toutes les 10 secondes sur ton appareil pour pouvoir la reprendre si la page se ferme. Elle est effacée quand tu l'enregistres ou la supprimes.</li><li><b>Choix d'affichage</b> : mémorise que tu ne veux plus voir certaines fenêtres (passkey, installation).</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
+<h3>Ce que le site utilise</h3><p>Le site n'utilise que le stockage local de ton navigateur (« localStorage »), strictement nécessaire à son fonctionnement :</p><ul><li><b>Session de connexion</b> (Supabase) : te garde connecté. Durée : jusqu'à la déconnexion ou l'expiration de la session.</li><li><b>Préférences</b> : mémorise ton accord à l'envoi d'adresses pour les itinéraires et ton autonomie saisie. Durée : jusqu'à effacement par toi.</li><li><b>Sauvegarde du suivi GPS</b> : la sortie en cours est enregistrée toutes les 10 secondes sur ton appareil pour pouvoir la reprendre si la page se ferme. Elle est effacée quand tu l'enregistres ou la supprimes.</li><li><b>Choix d'affichage</b> : mémorise que tu ne veux plus voir certaines fenêtres (passkey, installation).</li><li><b>Choix liés aux classements et aux lieux</b> : mémorise une invitation en attente (le temps de te connecter), ton accord pour les lieux utiles, les annonces que tu as fermées et les étapes de série ou d'objectif déjà fêtées.</li><li><b>Information sur le stockage</b> : mémorise que tu as lu le bandeau d'information. Durée : jusqu'à effacement des données du navigateur.</li></ul>
 <h3>Ce que le site n'utilise pas</h3><p>Aucun cookie publicitaire, aucun outil de mesure d'audience, aucun bouton ou contenu de réseau social, aucune police ni vidéo chargée depuis un service tiers de suivi.</p>
 <h3>Consentement</h3><p>Ces éléments sont strictement nécessaires au service que tu demandes : ils sont exemptés de consentement (article 82 de la loi Informatique et Libertés). Si un traceur non essentiel était ajouté un jour, ton consentement te serait demandé <i>avant</i> tout dépôt, et tu pourrais le refuser aussi simplement que l'accepter.</p>
 <h3>Gérer ton navigateur</h3><p>Tu peux effacer le stockage local à tout moment dans les réglages de ton navigateur. Tu seras alors déconnecté.</p>`);
@@ -1000,7 +1273,7 @@ function askPasskey(){
 
 /* ====== Démarrage ====== */
 if(!localStorage.getItem("ck")) $("#cookie").style.display="block";
-sb.auth.onAuthStateChange((ev,session)=>{user=session?session.user:null; if(ev==="SIGNED_IN"&&/connexion|inscription|bienvenue/.test(location.hash)) location.hash="#/accueil"; if(ev==="SIGNED_IN"&&!REDUCED&&!sessionStorage.getItem("splash")){sessionStorage.setItem("splash","1"); splashPending=true}
+sb.auth.onAuthStateChange((ev,session)=>{user=session?session.user:null; if(ev==="SIGNED_IN"&&/connexion|inscription|bienvenue/.test(location.hash)) location.hash="#/accueil"; aalOK=null; if(ev==="SIGNED_IN"&&!REDUCED&&!sessionStorage.getItem("splash")){sessionStorage.setItem("splash","1"); splashPending=true}
  if(ev==="SIGNED_OUT"){sessionStorage.removeItem("splash"); sessionStorage.removeItem("pk_shown"); location.hash="#/bienvenue"} route()});
 </script>
 </body>
